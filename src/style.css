@@ -224,7 +224,7 @@ h1 {
   flex-direction: row;
   align-items: center;
   gap: 6px;
-  align-self: flex-end;
+  align-self: stretch;
   cursor: pointer;
 }
 

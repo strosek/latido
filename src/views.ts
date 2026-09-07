@@ -476,17 +476,17 @@ function renderBoard(): void {
     <section class="add-task">
       <input id="task-title" type="text" placeholder="What do you need to do? #tag" autocomplete="off" />
       <div class="add-task-row">
-        <label>Priority
-          <select id="task-priority">
-            <option value="1">1 · highest</option>
-            <option value="2" selected>2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5 · lowest</option>
+        <label>
+          <select id="task-priority" aria-label="Priority">
+            <option value="1">P1</option>
+            <option value="2" selected>P2</option>
+            <option value="3">P3</option>
+            <option value="4">P4</option>
+            <option value="5">P5</option>
           </select>
         </label>
-        <label>Quadrant
-          <select id="task-quadrant">
+        <label>
+          <select id="task-quadrant" aria-label="Quadrant">
             <option value="q1">Urgent · Important</option>
             <option value="q2" selected>Not urgent · Important</option>
             <option value="q3">Urgent · Not important</option>
@@ -510,7 +510,7 @@ function renderBoard(): void {
 
     ${planListHtml("Later", laterOpen, "deferred")}
     ${quickSection}
-    <p class="shortcut-hint"><span class="hint-text"><strong>N</strong> new task · <strong>/</strong> search · <strong>Space</strong> pause/resume · <strong>F</strong> finish · <strong>Esc</strong> close</span>${koFiHtml()}</p>`;
+    <p class="shortcut-hint"><span class="hint-text"><strong>N</strong> new task · <strong>/</strong> search · <strong>Esc</strong> close menus</span>${koFiHtml()}</p>`;
 }
 
 function renderHistory(taskId: string | null): void {
@@ -879,7 +879,7 @@ function renderSession(session: Session): void {
         }
       </section>
     </main>
-    <p class="shortcut-hint"><span class="hint-text"><strong>Space</strong> pause/resume · <strong>F</strong> finish · <strong>Esc</strong> close</span>${koFiHtml()}</p>`;
+    <p class="shortcut-hint"><span class="hint-text"><strong>Space</strong> pause/resume · <strong>F</strong> finish</span>${koFiHtml()}</p>`;
 }
 
 function renderBreak(): void {
