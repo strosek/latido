@@ -1,3 +1,47 @@
+/* 0065: self-hosted variable fonts — offline-safe, cached by the service worker. */
+@font-face {
+  font-family: "Nunito Sans";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/nunito-sans-latin-ext.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+@font-face {
+  font-family: "Nunito Sans";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/nunito-sans-latin.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/fraunces-latin-ext.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/fraunces-latin.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   color-scheme: dark;
 
@@ -35,11 +79,20 @@
   --text-lg: 1rem;
 
   font-family:
+    "Nunito Sans",
     system-ui,
     -apple-system,
     "Segoe UI",
     Roboto,
     sans-serif;
+}
+
+/* 0065: a warm serif accent for display headings, used sparingly. */
+h1,
+.page-title,
+.session-task-title {
+  font-family: "Fraunces", Georgia, "Times New Roman", serif;
+  letter-spacing: -0.01em;
 }
 
 :root[data-theme="day"] {
@@ -404,6 +457,36 @@ a.ghost:hover {
   color: var(--on-accent);
 }
 
+/* 0067: brief checkmark pop before the row commits to "done". */
+.check.checking {
+  animation: checkPop 0.16s ease-out;
+}
+
+.check.checking::after {
+  content: "✓";
+  animation: checkIn 0.16s ease-out;
+}
+
+@keyframes checkPop {
+  from {
+    transform: scale(0.6);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes checkIn {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .task-body {
   flex: 1;
   display: flex;
@@ -516,6 +599,80 @@ a.ghost:hover {
   font-variant-numeric: tabular-nums;
   color: var(--accent-bright);
   line-height: 1;
+}
+
+/* 0064: the clock sits in a frame that can carry a progress ring and a heartbeat glow. */
+.clock-frame {
+  position: relative;
+  width: min(280px, 78vw);
+  height: min(280px, 78vw);
+  display: grid;
+  place-items: center;
+}
+
+.clock-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-bg {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 8;
+}
+
+.ring-fg {
+  fill: none;
+  stroke: var(--moss);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.25s linear;
+}
+
+.clock-frame.pulse .clock {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+.clock-frame.pulse-strong .clock {
+  animation-duration: 2.8s;
+}
+
+/* 0054: gently emphasize the count-up once past the gentle-reminder limit. */
+.clock-frame.nudge-past .clock {
+  color: var(--gold);
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    filter: drop-shadow(0 0 0 rgba(127, 176, 105, 0));
+  }
+  50% {
+    transform: scale(1.015);
+    opacity: 0.92;
+    filter: drop-shadow(0 0 22px rgba(127, 176, 105, 0.35));
+  }
+}
+
+/* 0066: gentle fade/slide when a view first mounts (never on the repaint tick). */
+.view-enter {
+  animation: viewIn 0.16s ease-out;
+}
+
+@keyframes viewIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .pomodoro-count,
@@ -738,6 +895,11 @@ a.ghost:hover {
   color: var(--text-dim);
 }
 
+.field-hint {
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
 .check-field {
   flex-direction: row;
   align-items: center;
@@ -903,6 +1065,122 @@ button:focus-visible {
 
 .toast-text strong {
   color: var(--text);
+}
+
+/* 0072: clickable "Next: …" suggestion inside the finish toast. */
+.toast-link {
+  background: transparent;
+  border: none;
+  color: var(--accent-bright);
+  font-size: var(--text-sm);
+  padding: 0;
+  text-decoration: underline;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toast-link:hover {
+  color: var(--accent-hover);
+}
+
+/* 0069: friendly empty-state blocks with an icon and a path forward. */
+
+.empty-state {
+  text-align: center;
+  color: var(--text-faint);
+  padding: 40px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.empty-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  color: var(--text-faint);
+  margin-bottom: 4px;
+}
+
+.empty-icon .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.empty-title {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.empty-text {
+  margin: 0;
+  max-width: 34ch;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* 0070: first-run welcome card. */
+
+.welcome {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--moss);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  margin: 18px 0 0;
+  box-shadow: var(--shadow);
+}
+
+.welcome h2 {
+  margin: 0 0 8px;
+  font-size: var(--text-lg);
+}
+
+.welcome-steps {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  color: var(--text-dim);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+
+.welcome-dismiss {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+/* 0071: live quick-add parsing feedback. */
+
+.parse-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  min-height: 20px;
+}
+
+.parse-chip {
+  font-size: var(--text-xs);
+  color: var(--accent-bright);
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
 }
 
 /* CSV import preview (0048) */
@@ -1071,6 +1349,17 @@ button:focus-visible {
 .row-menu button:hover {
   background: var(--surface-2);
   color: var(--text);
+}
+
+.row-menu button:disabled {
+  color: var(--text-faint);
+  cursor: default;
+  opacity: 0.5;
+}
+
+.row-menu button:disabled:hover {
+  background: transparent;
+  color: var(--text-faint);
 }
 
 /* Settings field row (0034) */
@@ -1258,17 +1547,19 @@ button:focus-visible {
   width: 100%;
   max-width: 26px;
   border-radius: 4px 4px 0 0;
-  background: var(--moss);
+  background: linear-gradient(180deg, var(--accent-bright) 0%, var(--moss) 100%);
   opacity: 0.85;
   transition: opacity 0.15s ease;
 }
 
 .chart-col.today .chart-bar {
-  background: var(--accent-bright);
+  background: linear-gradient(180deg, var(--accent-bright) 0%, var(--moss) 100%);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 .chart-col.zero .chart-bar {
   background: var(--border);
+  box-shadow: none;
   opacity: 0.6;
 }
 
@@ -1321,7 +1612,7 @@ button:focus-visible {
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: var(--moss);
+  background: linear-gradient(90deg, var(--leaf) 0%, var(--moss) 100%);
   opacity: 0.85;
   transition: width 0.2s ease;
 }

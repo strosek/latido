@@ -11,6 +11,7 @@ import {
   setEstimate,
   showIdleToast,
 } from "./actions";
+import { catchUpHidden } from "./repaint";
 import {
   activeSession,
   breakState,
@@ -33,7 +34,7 @@ import {
 } from "./state";
 import { MIN } from "./timer";
 import type { Quadrant } from "./types";
-import { render } from "./views";
+import { render, updateQuickAddChips } from "./views";
 
 const IDLE_NUDGE_MS = 10 * MIN;
 
@@ -104,6 +105,32 @@ function handleShortcut(e: KeyboardEvent): void {
     } else if (session && session.status !== "done") {
       finishSession(session);
     }
+    return;
+  }
+
+  // 0073: navigation shortcuts and the cheat sheet. Only outside dialogs/views where
+  // a session or quick run owns the screen.
+  const inView = session || quickRun || breakState;
+  if (key === "?") {
+    if (!document.querySelector(".overlay")) handleAction("shortcuts", undefined);
+    return;
+  }
+  if (lower === "d" || lower === "h") {
+    if (inView || document.querySelector(".overlay")) return;
+    e.preventDefault();
+    handleAction(lower === "d" ? "view-dashboard" : "view-history", undefined);
+    return;
+  }
+  if (lower === "j" || lower === "k") {
+    if (inView || subView || document.querySelector(".overlay")) return;
+    const rows = Array.from(document.querySelectorAll<HTMLElement>(".task"));
+    if (!rows.length) return;
+    e.preventDefault();
+    const active = document.activeElement;
+    const idx = rows.findIndex((r) => r.contains(active));
+    const dir = lower === "j" ? 1 : -1;
+    const next = idx < 0 ? 0 : Math.min(rows.length - 1, Math.max(0, idx + dir));
+    (rows[next].querySelector<HTMLElement>(".check") ?? rows[next]).focus();
   }
 }
 
@@ -120,6 +147,7 @@ document.addEventListener("click", (e) => {
 });
 
 // Idle nudge: remember when the tab went hidden during a running session (0035).
+// 0057: on return, recompute any phase/break transitions that happened while throttled.
 document.addEventListener("visibilitychange", () => {
   const session = activeSession();
   if (document.hidden) {
@@ -130,20 +158,26 @@ document.addEventListener("visibilitychange", () => {
       setHiddenAt(null);
       setHiddenSessionId(null);
     }
-  } else if (hiddenAt != null && hiddenSessionId != null) {
-    const s = activeSession();
-    if (
-      s &&
-      s.id === hiddenSessionId &&
-      s.status === "running" &&
-      Date.now() - hiddenAt >= IDLE_NUDGE_MS
-    ) {
-      showIdleToast(s);
+  } else {
+    if (hiddenAt != null && hiddenSessionId != null) {
+      const s = activeSession();
+      if (
+        s &&
+        s.id === hiddenSessionId &&
+        s.status === "running" &&
+        Date.now() - hiddenAt >= IDLE_NUDGE_MS
+      ) {
+        showIdleToast(s);
+      }
+      setHiddenAt(null);
+      setHiddenSessionId(null);
     }
-    setHiddenAt(null);
-    setHiddenSessionId(null);
+    catchUpHidden();
   }
 });
+
+window.addEventListener("focus", catchUpHidden);
+window.addEventListener("pageshow", catchUpHidden);
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
@@ -158,9 +192,12 @@ app.addEventListener("click", (e) => {
     return;
   }
 
-  if (target.closest("[data-menu]")) setOpenMenuTaskId(null);
+  // 0060: keep the menu open so a task can be moved more than once in a row.
+  if (target.closest("[data-menu]") && target.dataset.action !== "move-task") {
+    setOpenMenuTaskId(null);
+  }
 
-  handleAction(target.dataset.action, target.dataset.id);
+  handleAction(target.dataset.action, target.dataset.id, target.dataset.dir);
 });
 
 app.addEventListener("input", (e) => {
@@ -173,8 +210,16 @@ app.addEventListener("input", (e) => {
       el.focus();
       el.setSelectionRange(searchQuery.length, searchQuery.length);
     }
+    return;
+  }
+  // 0071: debounced live feedback for the natural-language quick-add parser.
+  if (input.id === "task-title") {
+    window.clearTimeout(addChipsTimer);
+    addChipsTimer = window.setTimeout(() => updateQuickAddChips(input.value), 150);
   }
 });
+
+let addChipsTimer: number | undefined;
 
 app.addEventListener("change", (e) => {
   const target = e.target as HTMLElement;
@@ -198,9 +243,8 @@ app.addEventListener("change", (e) => {
   if (target.dataset?.sort !== undefined) {
     const raw = (target as HTMLSelectElement).value;
     setSortBy(
-      (raw === "type" || raw === "newest" || raw === "manual"
-        ? raw
-        : "priority") as "priority" | "type" | "newest" | "manual",
+      (raw === "type" || raw === "newest" || raw === "manual" ? raw : "priority") as
+        "priority" | "type" | "newest" | "manual",
     );
     render();
   }

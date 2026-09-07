@@ -1,10 +1,26 @@
 import type { AppState, Session, Settings, Task } from "./types";
-import { MIN, activeElapsedMs } from "./timer";
+import { MIN, activeElapsedMs, configFromSettings, snapshot } from "./timer";
 import { DAY_MS, dayKey, startOfLocalDay, startOfWeek } from "./dates";
+
+/** 0055: pomodoro work time, counting the elapsed portion of a final, unfinished focus block.
+ *  Reuses the cycle decomposition in `timer.ts` (snapshot) so it stays in sync with the UI. */
+export function pomodoroWorkMs(
+  session: Session,
+  settings: Settings,
+  now: number = Date.now(),
+): number {
+  const end = session.endedAt ?? now;
+  const snap = snapshot(session, configFromSettings(settings), end);
+  let ms = session.completedPomodoros * settings.pomodoroWorkMin * MIN;
+  if (snap.phase === "work" && snap.remainingMs !== null) {
+    ms += settings.pomodoroWorkMin * MIN - snap.remainingMs;
+  }
+  return ms;
+}
 
 /** Actual work done in a session.
  *  - flowtime: all active time counts as work.
- *  - pomodoro: derive from completed focus blocks (breaks are excluded).
+ *  - pomodoro: completed focus blocks plus any elapsed portion of the final block (breaks excluded).
  */
 export function sessionWorkMs(
   session: Session,
@@ -12,7 +28,7 @@ export function sessionWorkMs(
   now: number = Date.now(),
 ): number {
   if (session.technique === "pomodoro") {
-    return session.completedPomodoros * settings.pomodoroWorkMin * MIN;
+    return pomodoroWorkMs(session, settings, now);
   }
   return activeElapsedMs(session, session.endedAt ?? now);
 }

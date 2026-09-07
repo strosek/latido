@@ -147,3 +147,15 @@ export function phaseLabel(phase: Phase): string {
       return "Long break";
   }
 }
+
+/** 0064: total length of a pomodoro phase, used to render the progress ring. */
+export function phaseMs(phase: Phase, config: TimerConfig): number {
+  switch (phase) {
+    case "work":
+      return config.pomodoroWorkMs;
+    case "shortBreak":
+      return config.pomodoroShortBreakMs;
+    case "longBreak":
+      return config.pomodoroLongBreakMs;
+  }
+}

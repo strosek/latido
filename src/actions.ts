@@ -1,7 +1,15 @@
 import { announce } from "./announce";
-import { DAY_MS, minutesInDay, nextDueDate, startOfLocalDay, todayStart, ymdForDate } from "./dates";
+import {
+  DAY_MS,
+  minutesInDay,
+  nextDueDate,
+  startOfLocalDay,
+  todayStart,
+  ymdForDate,
+} from "./dates";
 import { openDialog, showImportError, showMessage, downloadTextFile } from "./dialogs";
 import { escapeHtml } from "./escape";
+import { parseCsv, parseCsvTasks, parseQuickAdd, plannedForFrom } from "./parse";
 import { startRepaint, stopRepaint } from "./repaint";
 import {
   activeSession,
@@ -14,6 +22,8 @@ import {
   quickRun,
   setBreakState,
   setDescriptionHintVisible,
+  setFilterPriority,
+  setFilterQuadrant,
   setFocusMode,
   setHiddenAt,
   setHiddenSessionId,
@@ -22,6 +32,7 @@ import {
   setOpenMenuTaskId,
   setQuickRun,
   setResumeHintVisible,
+  setSearchQuery,
   setSettings,
   setState,
   setSubView,
@@ -35,6 +46,7 @@ import {
   emptyState,
   loadBackup,
   loadSnapshots,
+  markOnboarded,
   parseImport,
   removeSnapshot,
   saveBackup,
@@ -63,81 +75,6 @@ function stripTags(title: string): string {
     .replace(/#[\p{L}\p{N}_-]+/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-/* ------------------------------------------------------------------ */
-/* Natural-language quick-add (0046)                                   */
-/* ------------------------------------------------------------------ */
-
-const WEEKDAY_TO_DOW: Record<string, number> = {
-  sun: 0, sunday: 0,
-  mon: 1, monday: 1,
-  tue: 2, tues: 2, tuesday: 2,
-  wed: 3, wednesday: 3,
-  thu: 4, thur: 4, thurs: 4, thursday: 4,
-  fri: 5, friday: 5,
-  sat: 6, saturday: 6,
-};
-
-interface QuickParse {
-  clean: string;
-  priority?: number;
-  timeMin?: number;
-  dueDay?: number; // 0 = today, 1 = tomorrow, otherwise a JS weekday (0..6)
-}
-
-function parseQuickAdd(raw: string): QuickParse {
-  let clean = raw;
-  let priority: number | undefined;
-
-  const prio = clean.match(/(^|\s)[!p]([1-5])(?=\s|$)/i);
-  if (prio) {
-    priority = Number(prio[2]);
-    clean = clean.replace(prio[0], " ");
-  }
-
-  let timeMin: number | undefined;
-
-  let dueDay: number | undefined;
-  const word = clean.match(/(^|\s)(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)(?=\s|$)/i);
-  if (word) {
-    const w = word[2].toLowerCase();
-    if (w === "today") dueDay = 0;
-    else if (w === "tomorrow") dueDay = 1;
-    else dueDay = WEEKDAY_TO_DOW[w];
-    clean = clean.replace(word[0], " ");
-  }
-
-  // Only strip a time when a date word is present, so "Meet at 12:30" keeps its text.
-  if (dueDay !== undefined) {
-    const t24 = clean.match(/(^|\s)(\d{1,2}):(\d{2})(?=\s|$)/);
-    if (t24) {
-      timeMin = Number(t24[2]) * 60 + Number(t24[3]);
-      clean = clean.replace(t24[0], " ");
-    } else {
-      const t12 = clean.match(/(^|\s)(\d{1,2})\s*(am|pm)(?=\s|$)/i);
-      if (t12) {
-        let h = Number(t12[2]) % 12;
-        if (t12[3].toLowerCase() === "pm") h += 12;
-        timeMin = h * 60;
-        clean = clean.replace(t12[0], " ");
-      }
-    }
-  }
-
-  return { clean: clean.replace(/\s+/g, " ").trim(), priority, timeMin, dueDay };
-}
-
-function plannedForFrom(dueDay: number | undefined, timeMin: number | undefined): number | null {
-  if (dueDay === undefined) return null;
-  const now = new Date();
-  if (dueDay === 1) {
-    now.setDate(now.getDate() + 1);
-  } else if (dueDay > 1) {
-    const diff = dueDay - now.getDay();
-    now.setDate(now.getDate() + (diff <= 0 ? diff + 7 : diff));
-  }
-  return startOfLocalDay(now.getTime()) + (timeMin ?? 0) * 60_000;
 }
 
 function nextManualOrder(): number {
@@ -241,8 +178,12 @@ export function addTask(): void {
       plannedFor,
       recurrence: null,
       order: nextManualOrder(),
+      completions: [],
     });
     titleInput.value = "";
+    // 0071: clear the live parsing chips once the task is created.
+    const chips = document.getElementById("add-parse-feedback");
+    if (chips) chips.innerHTML = "";
     persist();
     render();
   };
@@ -273,30 +214,44 @@ function toggleTask(id: string): void {
   const task = taskById(id);
   if (!task) return;
   // 0043: completing a recurring task immediately reopens it for its next occurrence.
+  // 0063: each completed occurrence is appended to the task's completion history.
   if (!task.done && task.recurrence) {
     const prev = task.plannedFor;
-    task.plannedFor = nextDueDate(task.recurrence, Date.now());
+    const completion = { completedAt: Date.now(), plannedFor: prev };
+    task.completions.push(completion);
+    task.plannedFor = nextDueDate(task.recurrence, completion.completedAt);
     persist();
     render();
     showUndoToast("Task rescheduled for its next occurrence", () => {
       task.plannedFor = prev;
+      task.completions = task.completions.filter((c) => c !== completion);
       persist();
       render();
     });
     return;
   }
   if (!task.done) {
-    task.done = true;
-    task.doneAt = Date.now();
-    persist();
-    render();
-    announce("Task completed");
-    showUndoToast("Task completed", () => {
-      task.done = false;
-      task.doneAt = null;
+    // 0067: brief checkmark animation on the row's toggle before committing.
+    const btn = document.querySelector<HTMLElement>(`.check[data-id="${id}"]`);
+    const commit = (): void => {
+      task.done = true;
+      task.doneAt = Date.now();
       persist();
       render();
-    });
+      announce("Task completed");
+      showUndoToast("Task completed", () => {
+        task.done = false;
+        task.doneAt = null;
+        persist();
+        render();
+      });
+    };
+    if (btn) {
+      btn.classList.add("checking");
+      window.setTimeout(commit, 160);
+    } else {
+      commit();
+    }
     return;
   }
   task.done = false;
@@ -313,24 +268,61 @@ function toggleQuick(id: string): void {
   render();
 }
 
-/** 0048: reorder open tasks in manual mode when one is dragged over another. */
-export function reorderTasks(draggedId: string, overId: string): void {
-  if (draggedId === overId) return;
-  const open = state.tasks
+/** Open tasks in the current manual order (the ordering used by the manual sort mode). */
+function manualOrderTasks(): Task[] {
+  return state.tasks
     .filter((t) => !t.done)
-    .sort((a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER) || a.createdAt - b.createdAt);
-  const ids = open.map((t) => t.id);
-  const from = ids.indexOf(draggedId);
-  const to = ids.indexOf(overId);
-  if (from < 0 || to < 0) return;
-  ids.splice(from, 1);
-  ids.splice(to, 0, draggedId);
-  for (const [i, id] of ids.entries()) {
+    .sort(
+      (a, b) =>
+        (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER) ||
+        a.createdAt - b.createdAt,
+    );
+}
+
+function writeManualOrder(orderedIds: string[]): void {
+  for (const [i, id] of orderedIds.entries()) {
     const t = state.tasks.find((x) => x.id === id);
     if (t) t.order = i + 1;
   }
   persist();
   render();
+}
+
+/** 0074: restore a captured order snapshot (undo for reorders). */
+function restoreOrders(prev: { id: string; order: number }[]): void {
+  for (const p of prev) {
+    const t = taskById(p.id);
+    if (t) t.order = p.order;
+  }
+  persist();
+  render();
+}
+
+/** 0048: reorder open tasks in manual mode when one is dragged over another. */
+export function reorderTasks(draggedId: string, overId: string): void {
+  if (draggedId === overId) return;
+  const ids = manualOrderTasks().map((t) => t.id);
+  const from = ids.indexOf(draggedId);
+  const to = ids.indexOf(overId);
+  if (from < 0 || to < 0) return;
+  const prev = state.tasks.map((t) => ({ id: t.id, order: t.order }));
+  ids.splice(from, 1);
+  ids.splice(to, 0, draggedId);
+  writeManualOrder(ids);
+  showUndoToast("Order changed", () => restoreOrders(prev));
+}
+
+/** 0060: keyboard/touch-friendly reordering — swap a task with its neighbor. */
+function moveTask(id: string, direction: "up" | "down"): void {
+  const ids = manualOrderTasks().map((t) => t.id);
+  const i = ids.indexOf(id);
+  if (i < 0) return;
+  const j = direction === "up" ? i - 1 : i + 1;
+  if (j < 0 || j >= ids.length) return;
+  const prev = state.tasks.map((t) => ({ id: t.id, order: t.order }));
+  [ids[i], ids[j]] = [ids[j], ids[i]];
+  writeManualOrder(ids);
+  showUndoToast("Order changed", () => restoreOrders(prev));
 }
 
 function toggleToday(id: string): void {
@@ -412,20 +404,18 @@ function openRecurrenceDialog(id: string): void {
   if (!task) return;
 
   const now = new Date();
-  const defaultDate = task.plannedFor && startOfLocalDay(task.plannedFor) > todayStart()
-    ? task.plannedFor
-    : Date.now() + DAY_MS;
-  const defaultTime =
-    task.recurrence?.time ?? minutesInDay(Date.now());
+  const defaultDate =
+    task.plannedFor && startOfLocalDay(task.plannedFor) > todayStart()
+      ? task.plannedFor
+      : Date.now() + DAY_MS;
+  const defaultTime = task.recurrence?.time ?? minutesInDay(Date.now());
 
   const weekdaySelected =
     task.recurrence?.every === "weekly"
-      ? task.recurrence.weekday ?? currentWeekday()
+      ? (task.recurrence.weekday ?? currentWeekday())
       : currentWeekday();
   const daySelected =
-    task.recurrence?.every === "monthly"
-      ? task.recurrence.day ?? now.getDate()
-      : now.getDate();
+    task.recurrence?.every === "monthly" ? (task.recurrence.day ?? now.getDate()) : now.getDate();
 
   const overlay = openDialog(`
     <h3>Repeats</h3>
@@ -492,13 +482,17 @@ function openRecurrenceDialog(id: string): void {
     } else if (mode === "weekly") {
       recurrence = {
         every: "weekly",
-        weekday: Number(overlay.querySelector<HTMLSelectElement>("#recur-weekday")?.value ?? currentWeekday()),
+        weekday: Number(
+          overlay.querySelector<HTMLSelectElement>("#recur-weekday")?.value ?? currentWeekday(),
+        ),
         ...(time !== undefined ? { time } : {}),
       };
     } else if (mode === "monthly") {
       recurrence = {
         every: "monthly",
-        day: Number(overlay.querySelector<HTMLSelectElement>("#recur-day")?.value ?? new Date().getDate()),
+        day: Number(
+          overlay.querySelector<HTMLSelectElement>("#recur-day")?.value ?? new Date().getDate(),
+        ),
         ...(time !== undefined ? { time } : {}),
       };
     }
@@ -549,18 +543,26 @@ function confirmDeleteSession(sessionId: string): void {
   const task = taskById(session.taskId);
   const overlay = openDialog(`
     <h3>Delete this session?</h3>
-    <p class="dialog-text">${escapeHtml(task?.title ?? "Session")} · ${techniqueLabel(session.technique)} · ${formatDuration(sessionWorkMs(session, settings))}. This cannot be undone.</p>
+    <p class="dialog-text">${escapeHtml(task?.title ?? "Session")} · ${techniqueLabel(session.technique)} · ${formatDuration(sessionWorkMs(session, settings))}. You can undo this.</p>
     <div class="dialog-actions">
       <button id="del-cancel" class="ghost">Cancel</button>
       <button id="del-ok" class="danger-btn">Delete</button>
     </div>`);
   overlay.querySelector("#del-cancel")!.addEventListener("click", () => overlay.remove());
   overlay.querySelector("#del-ok")!.addEventListener("click", () => {
+    const index = state.sessions.findIndex((s) => s.id === sessionId);
+    const removedNotes = state.notes.filter((n) => n.sessionId === sessionId);
     state.sessions = state.sessions.filter((s) => s.id !== sessionId);
     state.notes = state.notes.filter((n) => n.sessionId !== sessionId);
     persist();
     overlay.remove();
     render();
+    showUndoToast(`Session deleted · ${task?.title ?? "Session"}`, () => {
+      state.sessions.splice(Math.min(index, state.sessions.length), 0, session);
+      state.notes.push(...removedNotes);
+      persist();
+      render();
+    });
   });
 }
 
@@ -632,14 +634,14 @@ function openEditTask(id: string): void {
             ${task.recurrence?.every === "weekly" ? "" : "hidden"}
             aria-label="Weekday"
           >
-            ${weekdayOptions(task.recurrence?.every === "weekly" ? task.recurrence.weekday ?? currentWeekday() : currentWeekday())}
+            ${weekdayOptions(task.recurrence?.every === "weekly" ? (task.recurrence.weekday ?? currentWeekday()) : currentWeekday())}
           </select>
           <select
             id="edit-recurrence-day"
             ${task.recurrence?.every === "monthly" ? "" : "hidden"}
             aria-label="Day of month"
           >
-            ${monthDayOptions(task.recurrence?.every === "monthly" ? task.recurrence.day ?? new Date().getDate() : new Date().getDate())}
+            ${monthDayOptions(task.recurrence?.every === "monthly" ? (task.recurrence.day ?? new Date().getDate()) : new Date().getDate())}
           </select>
           <input
             type="time"
@@ -673,9 +675,7 @@ function openEditTask(id: string): void {
     weekday.hidden = mode !== "weekly";
     day.hidden = mode !== "monthly";
   };
-  overlay
-    .querySelector("#edit-recurrence")
-    ?.addEventListener("change", toggleRecurrenceFields);
+  overlay.querySelector("#edit-recurrence")?.addEventListener("change", toggleRecurrenceFields);
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -687,7 +687,9 @@ function openEditTask(id: string): void {
     const est = estRaw === "" ? null : Number(estRaw);
 
     const recurMode = overlay.querySelector<HTMLSelectElement>("#edit-recurrence")?.value ?? "none";
-    const time = parseTimeInput(overlay.querySelector<HTMLInputElement>("#edit-recurrence-time")?.value);
+    const time = parseTimeInput(
+      overlay.querySelector<HTMLInputElement>("#edit-recurrence-time")?.value,
+    );
     let recurrence: Recurrence | null = null;
     if (recurMode === "daily") {
       recurrence = { every: "daily", ...(time !== undefined ? { time } : {}) };
@@ -746,7 +748,9 @@ function openAboutModal(): void {
       <p>Most focus apps interrupt you right when you're in flow. Latido treats <strong>Flowtime</strong>
       (count-up, work until your energy dips) as the default way to focus, and keeps
       <strong>Pomodoro</strong> around for when you need a forcing function against
-      procrastination. No account, no subscription, no tracking — your data lives in your browser.</p>
+      procrastination. After ~90 minutes — one natural ultradian wave — Flowtime can gently remind
+      you that it's okay to stop, without ever forcing you to. No account, no subscription, no
+      tracking — your data lives in your browser.</p>
       <h4>Get started</h4>
       <ul>
         <li>Add a task, pick a priority (1–5) and a quadrant (urgent / important).</li>
@@ -761,8 +765,11 @@ function openAboutModal(): void {
       <ul class="shortcuts-list">
         <li><strong>N</strong> new task</li>
         <li><strong>/</strong> search</li>
+        <li><strong>D</strong> dashboard · <strong>H</strong> history</li>
+        <li><strong>J</strong>/<strong>K</strong> move between tasks</li>
         <li><strong>Space</strong> pause/resume</li>
         <li><strong>F</strong> finish</li>
+        <li><strong>?</strong> shortcuts</li>
         <li><strong>Esc</strong> close / exit</li>
       </ul>
     </div>
@@ -771,6 +778,26 @@ function openAboutModal(): void {
       <button id="about-ok" class="primary">Got it</button>
     </div>`);
   overlay.querySelector("#about-ok")!.addEventListener("click", () => overlay.remove());
+}
+
+/** 0073: compact cheat-sheet overlay for the keyboard shortcuts. */
+function openShortcutsCheat(): void {
+  const overlay = openDialog(`
+    <h3>Keyboard shortcuts</h3>
+    <ul class="shortcuts-list">
+      <li><strong>N</strong> new task</li>
+      <li><strong>/</strong> search</li>
+      <li><strong>D</strong> dashboard · <strong>H</strong> history</li>
+      <li><strong>J</strong> / <strong>K</strong> move between tasks</li>
+      <li><strong>Space</strong> pause / resume</li>
+      <li><strong>F</strong> finish</li>
+      <li><strong>?</strong> this list</li>
+      <li><strong>Esc</strong> close / exit</li>
+    </ul>
+    <div class="dialog-actions">
+      <button id="shortcuts-ok" class="primary">Got it</button>
+    </div>`);
+  overlay.querySelector("#shortcuts-ok")!.addEventListener("click", () => overlay.remove());
 }
 
 function openSettings(): void {
@@ -801,6 +828,11 @@ function openSettings(): void {
         <label class="field">
           <span>Max flowtime (min, 0 = off)</span>
           <input type="number" id="set-max-flowtime" min="0" max="1440" value="${settings.maxFlowtimeMin}" />
+        </label>
+        <label class="field">
+          <span>Flowtime gentle reminder (min, 0 = off)</span>
+          <input type="number" id="set-flow-nudge" min="0" max="1440" value="${settings.flowtimeNudgeMin}" />
+          <span class="field-hint">Gently remind you to stop after N minutes.</span>
         </label>
         <label class="field">
           <span>Sound preset</span>
@@ -910,6 +942,10 @@ function openSettings(): void {
       maxFlowtimeMin: Math.min(
         1440,
         Math.max(0, Math.round(readNum("#set-max-flowtime", settings.maxFlowtimeMin))),
+      ),
+      flowtimeNudgeMin: Math.min(
+        1440,
+        Math.max(0, Math.round(readNum("#set-flow-nudge", settings.flowtimeNudgeMin))),
       ),
       soundEnabled: overlay.querySelector<HTMLInputElement>("#set-sound")?.checked ?? true,
       soundPreset: preset === "soft" || preset === "breeze" ? preset : "chime",
@@ -1032,7 +1068,9 @@ function openSettings(): void {
             <button id="snaprestore-cancel" class="ghost">Cancel</button>
             <button id="snaprestore-ok" class="primary">Restore</button>
           </div>`);
-        confirm.querySelector("#snaprestore-cancel")!.addEventListener("click", () => confirm.remove());
+        confirm
+          .querySelector("#snaprestore-cancel")!
+          .addEventListener("click", () => confirm.remove());
         confirm.querySelector("#snaprestore-ok")!.addEventListener("click", () => {
           saveBackup(settings, state);
           setState(snap.backup.data);
@@ -1097,119 +1135,52 @@ function confirmImport(
 }
 
 /* ------------------------------------------------------------------ */
-/* CSV import (0048)                                                   */
+/* Example data (0069/0070)                                            */
 /* ------------------------------------------------------------------ */
 
-function parseCsv(text: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let cell = "";
-  let inQuotes = false;
-  const s = text.replace(/^\uFEFF/, "");
-  for (let i = 0; i < s.length; i++) {
-    const ch = s[i];
-    if (inQuotes) {
-      if (ch === '"') {
-        if (s[i + 1] === '"') {
-          cell += '"';
-          i++;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        cell += ch;
-      }
-    } else if (ch === '"') {
-      inQuotes = true;
-    } else if (ch === ",") {
-      row.push(cell);
-      cell = "";
-    } else if (ch === "\n") {
-      row.push(cell);
-      cell = "";
-      if (row.some((c) => c.trim() !== "")) rows.push(row);
-      row = [];
-    } else if (ch !== "\r") {
-      cell += ch;
-    }
+/** 0069: load the bundled sample export through the standard import path. */
+export async function loadExampleData(): Promise<void> {
+  let text: string;
+  try {
+    const res = await fetch("examples/typical-2-months.json");
+    if (!res.ok) throw new Error("fetch failed");
+    text = await res.text();
+  } catch {
+    showMessage(
+      "Couldn't load examples",
+      "Example data couldn't be loaded. Add a task to get started — the box above understands plain language.",
+    );
+    return;
   }
-  row.push(cell);
-  if (row.some((c) => c.trim() !== "")) rows.push(row);
-  return rows;
-}
-
-interface CsvTaskStub {
-  title: string;
-  priority: number;
-  quadrant: Quadrant;
-  tags: string[];
-  done: boolean;
-  estimatedMin: number | null;
-}
-
-const QUADRANT_BY_NUMBER: Record<string, Quadrant> = {
-  "1": "q1", "2": "q2", "3": "q3", "4": "q4",
-};
-
-function parseQuadrant(value: string): Quadrant {
-  const v = value.trim().toLowerCase();
-  if (v === "q1" || v === "q2" || v === "q3" || v === "q4") return v;
-  return QUADRANT_BY_NUMBER[v] ?? "q2";
-}
-
-function parseCsvTasks(rows: string[][]): { tasks: CsvTaskStub[]; skipped: number } {
-  if (!rows.length) return { tasks: [], skipped: 0 };
-  const header = rows[0].map((h) => h.trim().toLowerCase());
-  const idx = (names: string[]): number => {
-    for (const n of names) {
-      const i = header.indexOf(n);
-      if (i >= 0) return i;
-    }
-    return -1;
-  };
-  const titleIdx = idx(["title", "content"]);
-  if (titleIdx < 0) return { tasks: [], skipped: rows.length };
-
-  const priorityIdx = idx(["priority"]);
-  const quadrantIdx = idx(["quadrant", "type"]);
-  const tagsIdx = idx(["tags", "labels"]);
-  const doneIdx = idx(["done", "completed"]);
-  const estIdx = idx(["estimated_min", "estimate"]);
-
-  const isTodoist = header.includes("type") && header.includes("content");
-
-  const tasks: CsvTaskStub[] = [];
-  let skipped = 0;
-  for (const row of rows.slice(1)) {
-    const title = (row[titleIdx] ?? "").trim();
-    if (!title) {
-      skipped++;
-      continue;
-    }
-    const priorityRaw = (row[priorityIdx] ?? "").trim();
-    const priority =
-      priorityRaw === "" ? 3 : Math.min(5, Math.max(1, Number(priorityRaw) || 3));
-    const tags = (row[tagsIdx] ?? "")
-      .split(/[,\s]+/)
-      .map((t) => t.trim().replace(/^#/, "").toLowerCase())
-      .filter(Boolean);
-    const doneRaw = (row[doneIdx] ?? "").trim().toLowerCase();
-    const done = doneRaw === "true" || doneRaw === "1" || doneRaw === "yes" || doneRaw === "done";
-    const estRaw = (row[estIdx] ?? "").trim();
-    const estimatedMin = estRaw === "" ? null : Math.round(Number(estRaw) || 0) || null;
-
-    let quadrant: Quadrant;
-    if (isTodoist) {
-      // Todoist priority: 1 (highest) .. 4 (lowest); Latido quadrant defaults to q2.
-      quadrant = "q2";
-    } else {
-      quadrant = quadrantIdx >= 0 ? parseQuadrant(row[quadrantIdx] ?? "") : "q2";
-    }
-
-    tasks.push({ title, priority, quadrant, tags, done, estimatedMin });
+  const result = parseImport(text);
+  if (!result.ok) {
+    showImportError(result.error);
+    return;
   }
-  return { tasks, skipped };
+  const overlay = openDialog(`
+    <h3>Load example data?</h3>
+    <p class="dialog-text">This replaces your current data with a realistic sample (${result.payload.data.tasks.length} tasks, ${result.payload.data.sessions.length} sessions) so you can explore Latido right away. A backup of your current data is saved first.</p>
+    <div class="dialog-actions">
+      <button id="ex-cancel" class="ghost">Cancel</button>
+      <button id="ex-ok" class="primary">Load</button>
+    </div>`);
+  overlay.querySelector("#ex-cancel")!.addEventListener("click", () => overlay.remove());
+  overlay.querySelector("#ex-ok")!.addEventListener("click", () => {
+    saveBackup(settings, state);
+    setState(result.payload.data);
+    setSettings(result.payload.settings);
+    persist();
+    saveSettings(settings);
+    applyTheme(settings.theme);
+    resetTransientState();
+    overlay.remove();
+    render();
+  });
 }
+
+/* ------------------------------------------------------------------ */
+/* CSV import (0048)                                                   */
+/* ------------------------------------------------------------------ */
 
 function openCsvImport(): void {
   const input = document.createElement("input");
@@ -1223,14 +1194,22 @@ function openCsvImport(): void {
       const rows = parseCsv(String(reader.result ?? ""));
       const { tasks, skipped } = parseCsvTasks(rows);
       if (!tasks.length) {
-        showImportError("No tasks could be parsed from this CSV. Expect a column named 'title' or 'content'.");
+        showImportError(
+          "No tasks could be parsed from this CSV. Expect a column named 'title' or 'content'.",
+        );
         return;
       }
       const preview = tasks
         .slice(0, 10)
-        .map((t) => `<li class="csv-preview-row"><span class="task-title">${escapeHtml(t.title)}</span>${t.done ? "<span class=\"csv-done\">done</span>" : ""}</li>`)
+        .map(
+          (t) =>
+            `<li class="csv-preview-row"><span class="task-title">${escapeHtml(t.title)}</span>${t.done ? '<span class="csv-done">done</span>' : ""}</li>`,
+        )
         .join("");
-      const more = tasks.length > 10 ? `<li class="csv-preview-row csv-more">… and ${tasks.length - 10} more</li>` : "";
+      const more =
+        tasks.length > 10
+          ? `<li class="csv-preview-row csv-more">… and ${tasks.length - 10} more</li>`
+          : "";
       const overlay = openDialog(`
         <h3>Import ${tasks.length} task(s) from CSV?</h3>
         ${skipped ? `<p class="dialog-text">${skipped} row(s) skipped (empty or unrecognized).</p>` : ""}
@@ -1257,6 +1236,7 @@ function openCsvImport(): void {
             plannedFor: null,
             recurrence: null,
             order: nextManualOrder(),
+            completions: [],
           });
         }
         persist();
@@ -1508,6 +1488,19 @@ function advanceQuick(): void {
   run.lastAdvance = now;
   persist();
   render();
+  // 0074: a mis-tap on "Close & next" reopens the task it just closed.
+  if (closed) {
+    showUndoToast("Quick task reopened", () => {
+      const t = taskById(closed.taskId);
+      if (t) {
+        t.done = false;
+        t.doneAt = null;
+      }
+      state.sessions = state.sessions.filter((s) => s.id !== closed.id);
+      persist();
+      render();
+    });
+  }
 }
 
 export function finishQuick(): void {
@@ -1585,6 +1578,7 @@ export function finishSession(session: Session): void {
   setLastFinished(record);
   if (settings.autoBreak && breakMs > 0) {
     setBreakState({
+      startedAt: now,
       endsAt: now + breakMs,
       taskId: session.taskId,
       technique: session.technique,
@@ -1640,12 +1634,29 @@ function undoFinish(): void {
   render();
 }
 
+/** 0072: best-effort suggestion for what to focus on next after finishing a session. */
+function nextOpenTask(excludeId: string): Task | null {
+  const planned = state.tasks
+    .filter((t) => !t.done && t.id !== excludeId && isTodayOpen(t))
+    .sort((a, b) => a.priority - b.priority || a.createdAt - b.createdAt);
+  if (planned.length) return planned[0];
+  const open = state.tasks
+    .filter((t) => !t.done && t.id !== excludeId)
+    .sort((a, b) => a.priority - b.priority || a.createdAt - b.createdAt);
+  return open[0] ?? null;
+}
+
 function showFinishToast(session: Session, line: string): void {
   const task = taskById(session.taskId);
+  const next = nextOpenTask(session.taskId);
+  const nextHtml = next
+    ? `<button class="toast-link" data-next="${next.id}" title="Start a session">Next: ${escapeHtml(next.title)}</button>`
+    : "";
   const toast = document.createElement("div");
   toast.className = "toast";
   toast.innerHTML = `
     <span class="toast-text"><strong>Finished</strong> · ${escapeHtml(task?.title ?? "task")} · ${escapeHtml(line)}</span>
+    ${nextHtml}
     <button id="undo-finish" class="primary">Undo</button>`;
   document.body.appendChild(toast);
 
@@ -1657,6 +1668,11 @@ function showFinishToast(session: Session, line: string): void {
     e.stopPropagation();
     undoFinish();
     dismiss();
+  });
+  toast.querySelector("[data-next]")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    dismiss();
+    if (next) promptStartSession(next.id);
   });
   window.setTimeout(dismiss, 4000);
 }
@@ -1688,9 +1704,17 @@ function editNote(noteId: string): void {
 }
 
 function deleteNote(noteId: string): void {
+  const note = state.notes.find((n) => n.id === noteId);
+  if (!note) return;
+  const index = state.notes.findIndex((n) => n.id === noteId);
   state.notes = state.notes.filter((n) => n.id !== noteId);
   persist();
   render();
+  showUndoToast("Note deleted", () => {
+    state.notes.splice(Math.min(index, state.notes.length), 0, note);
+    persist();
+    render();
+  });
 }
 
 export function addNote(sessionId: string, text: string): void {
@@ -1733,10 +1757,48 @@ export function showIdleToast(session: Session): void {
 }
 
 /* ------------------------------------------------------------------ */
+/* Flowtime gentle reminder (0054)                                     */
+/* ------------------------------------------------------------------ */
+
+export function showFlowtimeNudge(session: Session, minutes: number): void {
+  const task = taskById(session.taskId);
+  const message = `You've been at this for ${minutes} minutes — it's okay to stop.`;
+  if (settings.soundEnabled) playCue("finish", settings.soundPreset);
+  if (settings.notificationsEnabled) {
+    notify("Flowtime reminder", task ? `${message} · ${task.title}` : message);
+  }
+  announce(`Flowtime reminder. ${message}`);
+
+  document.querySelectorAll(".toast").forEach((t) => t.remove());
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.innerHTML = `
+    <span class="toast-text"><strong>Flowtime reminder</strong> · ${escapeHtml(message)}</span>
+    <button id="nudge-finish" class="primary">Finish</button>
+    <button id="nudge-keep" class="ghost">Keep going</button>`;
+  document.body.appendChild(toast);
+  const dismiss = (): void => toast.remove();
+  toast.querySelector("#nudge-finish")!.addEventListener("click", (e) => {
+    e.stopPropagation();
+    finishSession(session);
+    dismiss();
+  });
+  toast.querySelector("#nudge-keep")!.addEventListener("click", (e) => {
+    e.stopPropagation();
+    dismiss();
+  });
+  window.setTimeout(dismiss, 8000);
+}
+
+/* ------------------------------------------------------------------ */
 /* Dispatcher for `data-action` clicks                                 */
 /* ------------------------------------------------------------------ */
 
-export function handleAction(action: string | undefined, id: string | undefined): void {
+export function handleAction(
+  action: string | undefined,
+  id: string | undefined,
+  dir?: string,
+): void {
   const session = activeSession();
 
   switch (action) {
@@ -1766,6 +1828,12 @@ export function handleAction(action: string | undefined, id: string | undefined)
       break;
     case "delete-note":
       if (id) deleteNote(id);
+      break;
+    case "move-task":
+      if (id && (dir === "up" || dir === "down")) {
+        moveTask(id, dir);
+        positionRowMenu();
+      }
       break;
     case "open-menu":
       if (id) {
@@ -1815,6 +1883,30 @@ export function handleAction(action: string | undefined, id: string | undefined)
       break;
     case "open-about":
       openAboutModal();
+      break;
+    case "shortcuts":
+      openShortcutsCheat();
+      break;
+    case "focus-add":
+      document.querySelector<HTMLInputElement>("#task-title")?.focus();
+      break;
+    case "start-now":
+      markOnboarded();
+      render();
+      document.querySelector<HTMLInputElement>("#task-title")?.focus();
+      break;
+    case "dismiss-onboarding":
+      markOnboarded();
+      render();
+      break;
+    case "load-examples":
+      void loadExampleData();
+      break;
+    case "clear-filters":
+      setSearchQuery("");
+      setFilterPriority(null);
+      setFilterQuadrant(null);
+      render();
       break;
     case "toggle-focus":
       setFocusMode(!focusMode);

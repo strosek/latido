@@ -21,6 +21,12 @@ export type Recurrence =
   | { every: "monthly"; day?: number; time?: number } // day of month (1..31); defaults to completion day
   | { every: "days"; interval: number; time?: number }; // legacy "every N days" (not offered in the UI)
 
+/** 0063: one completed occurrence of a recurring task (append-only, bounded). */
+export interface TaskCompletion {
+  completedAt: number; // epoch ms when the occurrence was marked done
+  plannedFor: number | null; // the due timestamp of that occurrence
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -36,10 +42,12 @@ export interface Task {
   plannedFor: number | null; // local midnight of the planned day (0029/0030)
   recurrence: Recurrence | null; // 0043: repeats after completion (null = one-off)
   order: number; // 0048: manual ordering (used when sort is "manual")
+  completions: TaskCompletion[]; // 0063: history of completed occurrences (recurring only)
 }
 
 /** 0014: break countdown started automatically after finishing a session. */
 export interface BreakState {
+  startedAt: number; // 0064: when the break began (drives the progress ring)
   endsAt: number;
   taskId: string;
   technique: Technique;
@@ -109,6 +117,7 @@ export interface Settings {
   showEstimates: boolean; // 0016: show/hide estimate inputs + comparison
   notificationsEnabled: boolean; // 0020: browser notifications on transitions
   maxFlowtimeMin: number; // 0021: cap flowtime length (0 = off)
+  flowtimeNudgeMin: number; // 0054: gentle "okay to stop" reminder (0 = off)
   theme: Theme;
 }
 
@@ -124,6 +133,7 @@ export const DEFAULT_SETTINGS: Settings = {
   showEstimates: true,
   notificationsEnabled: false,
   maxFlowtimeMin: 0,
+  flowtimeNudgeMin: 90,
   theme: "night",
 };
 

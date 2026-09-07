@@ -20,6 +20,8 @@ import {
 import { formatDay, formatTimeOfDay, startOfLocalDay, startOfWeek } from "./dates";
 import { escapeHtml } from "./escape";
 import { icon } from "./icons";
+import { parseQuickAdd } from "./parse";
+import { isOnboarded } from "./storage";
 import {
   dailyFocus,
   doneSessions,
@@ -39,6 +41,7 @@ import {
   formatElapsed,
   formatMs,
   phaseLabel,
+  phaseMs,
   snapshot,
   techniqueLabel,
 } from "./timer";
@@ -61,6 +64,97 @@ export function updateDocumentTitle(clockText: string | null): void {
 /* ------------------------------------------------------------------ */
 /* Rendering                                                           */
 /* ------------------------------------------------------------------ */
+
+/** 0066: view key for the last render; only a change triggers the entrance animation. */
+let lastViewKey: string | null = null;
+
+/** Replace the app root, gently animating the view in on first mount (0066). */
+function renderView(key: string, html: string): void {
+  const changed = lastViewKey !== key;
+  lastViewKey = key;
+  app.innerHTML = html;
+  if (changed) {
+    for (const child of Array.from(app.children)) {
+      child.classList.add("view-enter");
+    }
+  }
+}
+
+/** 0064: circumference of the progress ring (r=54 in the 120 viewBox). */
+export const RING_C = 2 * Math.PI * 54;
+
+/** 0064: update the ring's remaining fraction (1 = full, 0 = empty). */
+export function updateClockRing(fraction: number): void {
+  const ring = document.querySelector<SVGCircleElement>("[data-ring]");
+  if (!ring) return;
+  const frac = Math.max(0, Math.min(1, fraction));
+  ring.style.strokeDashoffset = String(RING_C * (1 - frac));
+}
+
+/** 0064: clock wrapped in an optional progress ring and/or breathing pulse. */
+function clockFrameHtml(
+  text: string,
+  opts: { ringFrac?: number | null; pulse?: boolean; strong?: boolean; frameClass?: string } = {},
+): string {
+  const { ringFrac, pulse, strong, frameClass } = opts;
+  const cls = ["clock-frame", frameClass ?? "", pulse ? "pulse" : "", strong ? "pulse-strong" : ""]
+    .filter(Boolean)
+    .join(" ");
+  const ring =
+    ringFrac != null
+      ? `<svg class="clock-ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="ring-bg" cx="60" cy="60" r="54" />
+          <circle class="ring-fg" data-ring cx="60" cy="60" r="54" stroke-dasharray="${RING_C}" stroke-dashoffset="${RING_C * (1 - Math.max(0, Math.min(1, ringFrac)))}" />
+        </svg>`
+      : "";
+  return `<div class="${cls}">${ring}<div class="clock">${text}</div></div>`;
+}
+
+/** 0069: friendly empty-state block with an icon, copy, and an optional action. */
+function emptyStateHtml(iconName: string, title: string, text: string, cta = ""): string {
+  return `
+    <div class="empty-state">
+      <div class="empty-icon">${icon(iconName)}</div>
+      <p class="empty-title">${escapeHtml(title)}</p>
+      <p class="empty-text">${escapeHtml(text)}</p>
+      ${cta}
+    </div>`;
+}
+
+/** 0071: live chips under the add-task input showing what the parser understood. */
+function parseChipsFromTitle(raw: string): string[] {
+  return Array.from(raw.matchAll(/#([\p{L}\p{N}_-]+)/gu), (m) => m[1].toLowerCase());
+}
+
+export function updateQuickAddChips(raw: string): void {
+  const el = document.getElementById("add-parse-feedback");
+  if (!el) return;
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    el.innerHTML = "";
+    return;
+  }
+  const parsed = parseQuickAdd(trimmed);
+  const chips: string[] = [];
+  for (const tag of parseChipsFromTitle(trimmed)) chips.push(`#${escapeHtml(tag)}`);
+  if (parsed.priority != null) chips.push(`P${parsed.priority}`);
+  if (parsed.dueDay != null) {
+    const label =
+      parsed.dueDay === 0
+        ? "today"
+        : parsed.dueDay === 1
+          ? "tomorrow"
+          : (WEEKDAY_NAMES[parsed.dueDay] ?? "");
+    if (label) chips.push(escapeHtml(label));
+  }
+  if (parsed.timeMin != null) {
+    const t = formatTimeOfDay(parsed.timeMin);
+    if (t) chips.push(escapeHtml(t));
+  }
+  el.innerHTML = chips.length
+    ? `<span class="parse-chip">${chips.join('</span><span class="parse-chip">')}</span>`
+    : "";
+}
 
 export function render(): void {
   if (breakState) {
@@ -204,6 +298,8 @@ function matchesSearch(t: Task): boolean {
   const q = searchQuery.trim().toLowerCase();
   if (!q) return true;
   if (t.title.toLowerCase().includes(q)) return true;
+  // 0059: also match the longer description text.
+  if (t.description.toLowerCase().includes(q)) return true;
   return (t.tags ?? []).some((tag) => tag.toLowerCase().includes(q));
 }
 
@@ -378,6 +474,9 @@ function renderBoard(): void {
   const totals = new Map<string, ReturnType<typeof taskTotals>>();
   for (const t of state.tasks) totals.set(t.id, taskTotals(t.id, state.sessions, settings));
 
+  // 0060: manual-order position of each open task, to disable Move up/down at the edges.
+  const openManual = sortBy === "manual" ? sortedTasks(state.tasks.filter((t) => !t.done)) : [];
+
   const rows = mainTasks
     .map((task) => {
       const t = totals.get(task.id)!;
@@ -390,6 +489,14 @@ function renderBoard(): void {
         bits.push(`${t.sessionCount} session${t.sessionCount === 1 ? "" : "s"}`);
       if (t.pomodoroCount > 0)
         bits.push(`${t.pomodoroCount} pomodoro${t.pomodoroCount === 1 ? "" : "s"}`);
+
+      const manualIdx = openManual.findIndex((t) => t.id === task.id);
+      const moveButtons =
+        sortBy === "manual" && !task.done
+          ? `
+                  <button data-action="move-task" data-id="${task.id}" data-dir="up" ${manualIdx <= 0 ? "disabled" : ""}>Move up</button>
+                  <button data-action="move-task" data-id="${task.id}" data-dir="down" ${manualIdx < 0 || manualIdx >= openManual.length - 1 ? "disabled" : ""}>Move down</button>`
+          : "";
 
       return `
       <li class="task ${task.quadrant} ${task.done ? "done" : ""} ${isOverdueOpen(task) ? "overdue" : ""}" data-id="${task.id}">
@@ -425,6 +532,7 @@ function renderBoard(): void {
                   <button data-action="today" data-id="${task.id}">${isTodayOpen(task) ? "Unplan today" : "Plan today"}</button>
                   <button data-action="defer" data-id="${task.id}">Defer…</button>
                   <button data-action="repeats" data-id="${task.id}">${task.recurrence ? `Repeats: ${recurrenceLabel(task.recurrence)}` : "Repeat…"}</button>
+                  ${moveButtons}
                   <button data-action="edit" data-id="${task.id}">Edit</button>
                   <button data-action="task-history" data-id="${task.id}">History</button>
                   <button data-action="delete" data-id="${task.id}">Delete</button>
@@ -457,24 +565,69 @@ function renderBoard(): void {
 
   const hasFilters =
     filterPriority !== null || filterQuadrant !== null || searchQuery.trim() !== "";
-  const emptyMsg =
-    state.tasks.length === 0
-      ? "No tasks yet. Add one above."
-      : hasFilters &&
-          !mainTasks.length &&
-          !todayOpen.length &&
-          !laterOpen.length &&
-          !quickTasks.length
-        ? "No tasks match the current search or filters."
-        : "No more tasks here.";
 
-  app.innerHTML = `
+  // 0069: distinct, actionable empty states for a truly empty board vs. filtered-out rows.
+  let emptyHtml: string;
+  if (state.tasks.length === 0) {
+    const cta = `<div class="empty-actions">
+        <button class="primary" data-action="focus-add">Add your first task</button>
+        <button class="ghost" data-action="load-examples">Load example data</button>
+      </div>`;
+    emptyHtml = emptyStateHtml(
+      "check",
+      "Plan your first task",
+      "One small step at a time. Type what you need to do above — try “write report #work !1 tomorrow”.",
+      cta,
+    );
+  } else if (
+    hasFilters &&
+    !mainTasks.length &&
+    !todayOpen.length &&
+    !laterOpen.length &&
+    !quickTasks.length
+  ) {
+    const cta = `<div class="empty-actions"><button class="ghost" data-action="clear-filters">Clear filters</button></div>`;
+    emptyHtml = emptyStateHtml(
+      "search",
+      "No matching tasks",
+      "Nothing matches your search or filters right now.",
+      cta,
+    );
+  } else {
+    emptyHtml = `<p class="empty">No more tasks here.</p>`;
+  }
+
+  // 0070: a short welcome on the first ever run, before any data exists.
+  const showWelcome =
+    state.tasks.length === 0 && doneSessions(state).length === 0 && !isOnboarded();
+  const welcome = showWelcome
+    ? `
+    <section class="welcome">
+      <button class="icon-btn welcome-dismiss" data-action="dismiss-onboarding" title="Dismiss" aria-label="Dismiss welcome">${icon("x")}</button>
+      <h2>Work with your rhythm, not the clock.</h2>
+      <ol class="welcome-steps">
+        <li><strong>Add a task</strong> — the box above understands plain language (<code>#tags</code>, priorities, “tomorrow”).</li>
+        <li><strong>Start a session</strong> — Flowtime for deep work, Pomodoro when you need structure.</li>
+        <li><strong>See your rhythm</strong> — today's focus and the dashboard show where your energy went.</li>
+      </ol>
+      <div class="empty-actions">
+        <button class="primary" data-action="start-now">Start now</button>
+        <button class="ghost" data-action="load-examples">Load example data</button>
+      </div>
+    </section>`
+    : "";
+
+  renderView(
+    "board",
+    `
     ${pageHeaderHtml()}
     <div class="toolbar">
       ${summaryBarHtml()}
     </div>
+    ${welcome}
     <section class="add-task">
-      <input id="task-title" type="text" placeholder="What do you need to do? #tag" autocomplete="off" />
+      <input id="task-title" type="text" placeholder="What do you need to do? #tag" autocomplete="off" aria-describedby="add-parse-feedback" />
+      <div id="add-parse-feedback" class="parse-chips" aria-live="polite"></div>
       <div class="add-task-row">
         <label>
           <select id="task-priority" aria-label="Priority">
@@ -505,12 +658,13 @@ function renderBoard(): void {
     ${planListHtml("Today", todayOpen)}
 
     <main class="board">
-      ${mainTasks.length === 0 ? `<p class="empty">${emptyMsg}</p>` : `<ul class="task-list">${rows}</ul>`}
+      ${mainTasks.length === 0 ? emptyHtml : `<ul class="task-list">${rows}</ul>`}
     </main>
 
     ${planListHtml("Later", laterOpen, "deferred")}
     ${quickSection}
-    <p class="shortcut-hint"><span class="hint-text"><strong>N</strong> new task · <strong>/</strong> search · <strong>Esc</strong> close menus</span>${koFiHtml()}</p>`;
+    <p class="shortcut-hint"><span class="hint-text"><strong>N</strong> new task · <strong>/</strong> search · <strong>?</strong> shortcuts · <strong>Esc</strong> close menus</span>${koFiHtml()}</p>`,
+  );
 }
 
 function renderHistory(taskId: string | null): void {
@@ -519,6 +673,33 @@ function renderHistory(taskId: string | null): void {
   const sessions = doneSessions(state).filter((s) => (taskId ? s.taskId === taskId : true));
   const scopedTask = taskId ? taskById(taskId) : undefined;
   const title = taskId ? `History · ${scopedTask?.title ?? "deleted task"}` : "Session history";
+
+  const completions = scopedTask?.completions ?? [];
+  const completionsHtml = completions.length
+    ? `<section class="completion-log">
+        <h3 class="page-title">Completed occurrences</h3>
+        <ul class="hist-list">
+          ${completions
+            .map((c) => {
+              const when = new Date(c.completedAt).toLocaleString([], {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+              const due = c.plannedFor ? ` · was due ${formatDue(c.plannedFor)}` : " · no due date";
+              return `<li class="hist-item">
+                <div class="hist-top">
+                  <span class="hist-title">Completed</span>
+                  <span class="hist-date">${when}</span>
+                </div>
+                <div class="hist-sub">${due}</div>
+              </li>`;
+            })
+            .join("")}
+        </ul>
+      </section>`
+    : "";
 
   const rows = sessions
     .map((s) => {
@@ -561,17 +742,25 @@ function renderHistory(taskId: string | null): void {
     })
     .join("");
 
-  app.innerHTML = `
+  const sessionsEmpty = taskId
+    ? "No sessions for this task yet. Start one to begin its history."
+    : "No finished sessions yet. Your focus history will appear here.";
+
+  renderView(
+    "history",
+    `
     ${pageHeaderHtml()}
     <main class="board">
       <button class="back-btn" data-action="back-to-board">${icon("back")} Back</button>
       <h2 class="page-title">${escapeHtml(title)}</h2>
       ${
         sessions.length === 0
-          ? `<p class="empty">${taskId ? "No sessions for this task yet." : "No finished sessions yet."}</p>`
+          ? emptyStateHtml("history", "Nothing here yet", sessionsEmpty)
           : `<ul class="hist-list">${rows}</ul>`
       }
-    </main>`;
+      ${completionsHtml}
+    </main>`,
+  );
 }
 
 function renderDashboard(): void {
@@ -712,7 +901,9 @@ function renderDashboard(): void {
       </table>`
     : null;
 
-  app.innerHTML = `
+  renderView(
+    "dashboard",
+    `
     ${pageHeaderHtml()}
     <main class="board">
       <button class="back-btn" data-action="back-to-board">${icon("back")} Back</button>
@@ -740,37 +931,38 @@ function renderDashboard(): void {
         </section>
         <section class="dash-card wide">
           <h3>Focus trend</h3>
-          ${trendHtml ?? `<p class="dialog-text">No finished sessions yet.</p>`}
+          ${trendHtml ?? emptyStateHtml("dashboard", "No focus yet", "Finish a session to see your trend.")}
         </section>
         <section class="dash-card">
           <h3>Week rhythm</h3>
-          ${weekdayHtml ?? `<p class="dialog-text">No finished sessions yet.</p>`}
+          ${weekdayHtml ?? emptyStateHtml("dashboard", "No focus yet", "Finish sessions across the week to reveal your rhythm.")}
         </section>
         <section class="dash-card">
           <h3>Open tasks by quadrant</h3>
-          ${quadrantBars ?? `<p class="dialog-text">No tasks yet.</p>`}
+          ${quadrantBars ?? emptyStateHtml("check", "No tasks yet", "Add a task to populate this board.")}
         </section>
         <section class="dash-card">
           <h3>Areas needing attention</h3>
-          ${tagBars ?? `<p class="dialog-text">No open tags yet. Add tasks with #tags to see areas here.</p>`}
+          ${tagBars ?? emptyStateHtml("bolt", "No open tags yet", "Add tasks with #tags to see areas here.")}
         </section>
         <section class="dash-card">
           <h3>Focus by quadrant</h3>
-          ${quadFocusBars ?? `<p class="dialog-text">No finished sessions yet.</p>`}
+          ${quadFocusBars ?? emptyStateHtml("dashboard", "No focus yet", "Finish a session to see where your focus went.")}
         </section>
         <section class="dash-card">
           <h3>Focus by tag</h3>
-          ${tagFocusBars ?? `<p class="dialog-text">No finished sessions yet.</p>`}
+          ${tagFocusBars ?? emptyStateHtml("dashboard", "No focus yet", "Finish a session to see focus by tag.")}
         </section>
         <section class="dash-card wide">
           <div class="dash-card-head">
             <h3>Recent sessions</h3>
             <button class="icon-btn" data-action="view-history" title="View all history" aria-label="View all history">${icon("history")}</button>
           </div>
-          ${recentHtml ?? `<p class="dialog-text">No finished sessions yet.</p>`}
+          ${recentHtml ?? emptyStateHtml("history", "No finished sessions yet", "Your recent sessions will appear here.")}
         </section>
       </div>
-    </main>`;
+    </main>`,
+  );
 }
 
 function resumeHintFor(session: Session): { notes: string[] } | null {
@@ -795,6 +987,30 @@ function renderSession(session: Session): void {
   const title = escapeHtml(task?.title ?? "Untitled task");
   const clockText =
     session.technique === "pomodoro" ? formatMs(snap.remainingMs) : formatElapsed(snap.elapsedMs);
+  // 0054: slightly emphasize the count-up past the gentle-reminder limit.
+  const nudgePast =
+    session.technique === "flowtime" &&
+    settings.flowtimeNudgeMin > 0 &&
+    snap.elapsedMs >= settings.flowtimeNudgeMin * 60_000;
+
+  // 0064: pomodoro gets a draining progress ring; flowtime gets a slow heartbeat glow.
+  const config = timerConfig();
+  let ringFrac: number | null = null;
+  let pulse = false;
+  let pulseStrong = false;
+  if (session.technique === "pomodoro") {
+    const total = phaseMs(snap.phase, config);
+    ringFrac = snap.remainingMs != null && total > 0 ? snap.remainingMs / total : null;
+  } else {
+    pulse = true;
+    pulseStrong = nudgePast;
+  }
+  const clockHtml = clockFrameHtml(clockText, {
+    ringFrac,
+    pulse,
+    strong: pulseStrong,
+    frameClass: nudgePast ? "nudge-past" : "",
+  });
 
   if (focusMode) {
     const countBit =
@@ -802,15 +1018,18 @@ function renderSession(session: Session): void {
         ? `<div class="pomodoro-count">${snap.completedPomodoros} completed</div>`
         : "";
     updateDocumentTitle(clockText);
-    app.innerHTML = `
+    renderView(
+      "session",
+      `
       <main class="session-main focus">
         <header class="session-header">
           <h2 class="session-task-title">${title}</h2>
         </header>
-        <div class="clock">${clockText}</div>
+        ${clockHtml}
         ${countBit}
         <button class="ghost focus-exit" data-action="toggle-focus">Exit focus · Esc</button>
-      </main>`;
+      </main>`,
+    );
     return;
   }
 
@@ -842,7 +1061,9 @@ function renderSession(session: Session): void {
       : "";
   const notes = notesFor(session.id);
 
-  app.innerHTML = `
+  renderView(
+    "session",
+    `
     <main class="session-main">
       <header class="session-header">
         <h2 class="session-task-title">${title}</h2>
@@ -851,7 +1072,7 @@ function renderSession(session: Session): void {
 
       ${descBlock}
       ${hintBlock}
-      <div class="clock">${clockText}</div>
+      ${clockHtml}
       ${session.technique === "pomodoro" ? `<div class="pomodoro-count">${snap.completedPomodoros} completed</div>` : `<div class="elapsed">elapsed ${formatDuration(snap.elapsedMs)}</div>`}
 
       <div class="session-controls">
@@ -879,14 +1100,17 @@ function renderSession(session: Session): void {
         }
       </section>
     </main>
-    <p class="shortcut-hint"><span class="hint-text"><strong>Space</strong> pause/resume · <strong>F</strong> finish</span>${koFiHtml()}</p>`;
+    <p class="shortcut-hint"><span class="hint-text"><strong>Space</strong> pause/resume · <strong>F</strong> finish · <strong>?</strong> shortcuts</span>${koFiHtml()}</p>`,
+  );
 }
 
 function renderBreak(): void {
   if (!breakState) return;
   if (breakState.done) {
     updateDocumentTitle(null);
-    app.innerHTML = `
+    renderView(
+      "break",
+      `
       <main class="session-main">
         <header class="session-header">
           <h2 class="session-task-title">Break over</h2>
@@ -896,25 +1120,30 @@ function renderBreak(): void {
           <button class="primary" data-action="start-next">Start focusing</button>
           <button class="ghost" data-action="end-break">Done</button>
         </div>
-      </main>`;
+      </main>`,
+    );
     return;
   }
 
   const remaining = Math.max(0, breakState.endsAt - Date.now());
+  const total = breakState.endsAt - breakState.startedAt;
   updateDocumentTitle(formatMs(remaining));
-  app.innerHTML = `
+  renderView(
+    "break",
+    `
     <main class="session-main">
       <header class="session-header">
         <h2 class="session-task-title">Break</h2>
         <span class="session-phase">Rest · ${techniqueLabel(breakState.technique)}</span>
       </header>
-      <div class="clock">${formatMs(remaining)}</div>
+      ${clockFrameHtml(formatMs(remaining), { ringFrac: total > 0 ? remaining / total : 0 })}
       <div class="session-controls">
         <button class="primary" data-action="start-next">Start now</button>
         <button class="icon-btn" data-action="skip-break" title="Skip break" aria-label="Skip break">${icon("skip")}</button>
       </div>
     </main>
-    <p class="shortcut-hint"><span class="hint-text"><strong>F</strong> start focusing</span>${koFiHtml()}</p>`;
+    <p class="shortcut-hint"><span class="hint-text"><strong>F</strong> start focusing</span>${koFiHtml()}</p>`,
+  );
 }
 
 function renderQuickRun(): void {
@@ -923,17 +1152,20 @@ function renderQuickRun(): void {
   const left = state.tasks.filter((t) => t.quick && !t.done).length;
   const clockText = formatElapsed(Date.now() - quickRun.startedAt);
   updateDocumentTitle(clockText);
-  app.innerHTML = `
+  renderView(
+    "quick",
+    `
     <main class="session-main">
       <header class="session-header">
         <h2 class="session-task-title">${escapeHtml(task?.title ?? "Untitled task")}</h2>
         <span class="session-phase">Quick run · ${left} left</span>
       </header>
-      <div class="clock">${clockText}</div>
+      ${clockFrameHtml(clockText, { pulse: true })}
       <div class="session-controls">
         <button class="primary" data-action="quick-next">Close & next</button>
         <button class="ghost" data-action="quick-finish">Finish run</button>
       </div>
     </main>
-    <p class="shortcut-hint"><span class="hint-text"><strong>F</strong> finish run</span>${koFiHtml()}</p>`;
+    <p class="shortcut-hint"><span class="hint-text"><strong>F</strong> finish run</span>${koFiHtml()}</p>`,
+  );
 }

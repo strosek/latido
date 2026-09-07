@@ -5,6 +5,7 @@ import {
   formatDuration,
   formatElapsed,
   formatMs,
+  phaseMs,
   snapshot,
 } from "./timer";
 import type { TimerConfig } from "./timer";
@@ -150,8 +151,17 @@ describe("configFromSettings", () => {
       showEstimates: true,
       notificationsEnabled: false,
       maxFlowtimeMin: 0,
+      flowtimeNudgeMin: 90,
       theme: "night",
     };
     expect(configFromSettings(settings)).toEqual(BASE_CONFIG);
+  });
+});
+
+describe("phaseMs", () => {
+  it("returns the total length of each pomodoro phase", () => {
+    expect(phaseMs("work", BASE_CONFIG)).toBe(25 * MIN);
+    expect(phaseMs("shortBreak", BASE_CONFIG)).toBe(5 * MIN);
+    expect(phaseMs("longBreak", BASE_CONFIG)).toBe(15 * MIN);
   });
 });

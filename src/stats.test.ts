@@ -29,6 +29,7 @@ const SETTINGS: Settings = {
   showEstimates: true,
   notificationsEnabled: false,
   maxFlowtimeMin: 0,
+  flowtimeNudgeMin: 90,
   theme: "night",
 };
 
@@ -64,6 +65,7 @@ function task(overrides: Partial<Task> = {}): Task {
     plannedFor: null,
     recurrence: null,
     order: 0,
+    completions: [],
     ...overrides,
   };
 }
@@ -85,6 +87,53 @@ describe("sessionWorkMs", () => {
     const s = flowSession({ startedAt: 0, endedAt: 60 * MIN, accumulatedPauseMs: 10 * MIN });
     expect(sessionWorkMs(s, SETTINGS)).toBe(50 * MIN);
   });
+
+  // 0055: partial focus in the final (not-yet-complete) pomodoro block counts too.
+  it("counts the elapsed portion of a final unfinished work block", () => {
+    const s = flowSession({
+      technique: "pomodoro",
+      completedPomodoros: 0,
+      startedAt: 0,
+      endedAt: 20 * MIN,
+      accumulatedPauseMs: 0,
+    });
+    expect(sessionWorkMs(s, SETTINGS)).toBe(20 * MIN);
+  });
+
+  it("records a full block when a pomodoro finishes exactly at a boundary", () => {
+    const s = flowSession({
+      technique: "pomodoro",
+      completedPomodoros: 1,
+      startedAt: 0,
+      endedAt: 25 * MIN,
+      accumulatedPauseMs: 0,
+    });
+    expect(sessionWorkMs(s, SETTINGS)).toBe(25 * MIN);
+  });
+
+  it("counts only completed pomodoros when ending during a break", () => {
+    // 25 min work + 5 min into a 5-min short break.
+    const s = flowSession({
+      technique: "pomodoro",
+      completedPomodoros: 1,
+      startedAt: 0,
+      endedAt: 30 * MIN,
+      accumulatedPauseMs: 0,
+    });
+    expect(sessionWorkMs(s, SETTINGS)).toBe(25 * MIN);
+  });
+
+  it("keeps full blocks plus the partial of the final block", () => {
+    // 25 + 5 (break) + 20 of the second work block.
+    const s = flowSession({
+      technique: "pomodoro",
+      completedPomodoros: 1,
+      startedAt: 0,
+      endedAt: 50 * MIN,
+      accumulatedPauseMs: 0,
+    });
+    expect(sessionWorkMs(s, SETTINGS)).toBe(45 * MIN);
+  });
 });
 
 describe("taskTotals", () => {
@@ -92,7 +141,7 @@ describe("taskTotals", () => {
     const sessions = [
       flowSession({
         taskId: "t1",
-        endedAt: 10 * MIN,
+        endedAt: 55 * MIN,
         completedPomodoros: 2,
         technique: "pomodoro",
       }),

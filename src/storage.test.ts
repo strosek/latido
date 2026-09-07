@@ -68,6 +68,16 @@ describe("sanitizeSettings", () => {
     expect(s.soundPreset).toBe("chime");
     expect(s.theme).toBe("night");
   });
+
+  it("sanitizes flowtimeNudgeMin and defaults it to 90", () => {
+    expect(sanitizeSettings({ ...VALID_SETTINGS, flowtimeNudgeMin: 45 }).flowtimeNudgeMin).toBe(45);
+    expect(sanitizeSettings({ ...VALID_SETTINGS, flowtimeNudgeMin: 5000 }).flowtimeNudgeMin).toBe(
+      1440,
+    );
+    expect(sanitizeSettings({ ...VALID_SETTINGS, flowtimeNudgeMin: "nope" }).flowtimeNudgeMin).toBe(
+      DEFAULT_SETTINGS.flowtimeNudgeMin,
+    );
+  });
 });
 
 describe("sanitizeState", () => {
@@ -89,6 +99,7 @@ describe("sanitizeState", () => {
           plannedFor: null,
           recurrence: null,
           order: 0,
+          completions: [],
         },
       ],
       sessions: [
@@ -159,6 +170,36 @@ describe("sanitizeState", () => {
   it("defaults missing arrays to empty", () => {
     expect(sanitizeState({})).toEqual(emptyState());
     expect(sanitizeState(null)).toEqual(emptyState());
+  });
+
+  it("defaults a missing completion log to empty and caps its length", () => {
+    const out = sanitizeState({ tasks: [{ id: "t1", title: "Recurring" }] });
+    expect(out.tasks[0].completions).toEqual([]);
+
+    const many = Array.from({ length: 60 }, (_, i) => ({
+      completedAt: i,
+      plannedFor: i,
+    }));
+    const capped = sanitizeState({ tasks: [{ id: "t2", completions: many }] });
+    expect(capped.tasks[0].completions).toHaveLength(50);
+    expect(capped.tasks[0].completions[0].completedAt).toBe(10);
+  });
+
+  it("drops invalid completion log entries", () => {
+    const out = sanitizeState({
+      tasks: [
+        {
+          id: "t1",
+          completions: [
+            { completedAt: 1, plannedFor: null },
+            { completedAt: "nope", plannedFor: 2 },
+            { plannedFor: 3 },
+            null,
+          ],
+        },
+      ],
+    });
+    expect(out.tasks[0].completions).toEqual([{ completedAt: 1, plannedFor: null }]);
   });
 
   it("clears activeSessionId that points at a done or missing session", () => {
@@ -261,6 +302,7 @@ describe("persistence", () => {
           plannedFor: null,
           recurrence: null,
           order: 0,
+          completions: [],
         },
       ],
     };
@@ -329,6 +371,7 @@ describe("persistence", () => {
       plannedFor: null,
       recurrence: null,
       order: 0,
+          completions: [],
     });
     saveDailySnapshot(VALID_SETTINGS, state);
     const [entry] = loadSnapshots();

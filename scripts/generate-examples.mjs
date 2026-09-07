@@ -46,6 +46,7 @@ function buildSettings(overrides = {}) {
     showEstimates: true,
     notificationsEnabled: false,
     maxFlowtimeMin: 0,
+    flowtimeNudgeMin: 90,
     theme: "night",
     ...overrides,
   };

@@ -1,5 +1,13 @@
 import { DEFAULT_SETTINGS, newId } from "./types";
-import type { AppState, ExportPayload, RestartNote, Session, Settings, Task } from "./types";
+import type {
+  AppState,
+  ExportPayload,
+  RestartNote,
+  Session,
+  Settings,
+  Task,
+  TaskCompletion,
+} from "./types";
 
 const PRESETS = ["chime", "soft", "breeze"] as const;
 const DAY_MS = 86_400_000;
@@ -67,11 +75,39 @@ export function loadState(): AppState {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Storage quota safety (0061)                                         */
+/* ------------------------------------------------------------------ */
+
+let quotaWarningHandler: (() => void) | null = null;
+let quotaWarned = false;
+
+/** Register a handler that is called (once per session) when a save hits the storage quota. */
+export function onStorageQuotaExceeded(cb: () => void): void {
+  quotaWarningHandler = cb;
+}
+
+function isQuotaError(err: unknown): boolean {
+  return (
+    err instanceof DOMException &&
+    (err.name === "QuotaExceededError" ||
+      err.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+      err.name === "QuotaExceeded")
+  );
+}
+
+function reportQuotaIfExceeded(err: unknown): void {
+  if (!isQuotaError(err) || quotaWarned) return;
+  quotaWarned = true;
+  quotaWarningHandler?.();
+}
+
 export function saveState(state: AppState): void {
   try {
     localStorage.setItem(STATE_KEY, JSON.stringify(state));
   } catch (err) {
     console.error("Failed to save state.", err);
+    reportQuotaIfExceeded(err);
   }
 }
 
@@ -123,6 +159,7 @@ export function sanitizeSettings(raw: unknown): Settings {
         ? s.notificationsEnabled
         : DEFAULT_SETTINGS.notificationsEnabled,
     maxFlowtimeMin: clampNum(s.maxFlowtimeMin, 0, 1440, DEFAULT_SETTINGS.maxFlowtimeMin),
+    flowtimeNudgeMin: clampNum(s.flowtimeNudgeMin, 0, 1440, DEFAULT_SETTINGS.flowtimeNudgeMin),
     theme: s.theme === "day" ? "day" : "night",
   };
 }
@@ -144,6 +181,7 @@ export function saveSettings(settings: Settings): void {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   } catch (err) {
     console.error("Failed to save settings.", err);
+    reportQuotaIfExceeded(err);
   }
 }
 
@@ -170,8 +208,7 @@ function sanitizeRecurrence(raw: unknown): Task["recurrence"] {
   }
   if (r.every === "weekly") {
     const weekday = typeof r.weekday === "number" ? Math.round(r.weekday) : undefined;
-    const w =
-      weekday !== undefined && weekday >= 0 && weekday <= 6 ? weekday : undefined;
+    const w = weekday !== undefined && weekday >= 0 && weekday <= 6 ? weekday : undefined;
     const rec: Task["recurrence"] = { every: "weekly", ...(w !== undefined ? { weekday: w } : {}) };
     if (time !== undefined) rec.time = time;
     return rec;
@@ -195,6 +232,17 @@ function sanitizeRecurrence(raw: unknown): Task["recurrence"] {
   return null;
 }
 
+const COMPLETION_LOG_MAX = 50;
+
+function sanitizeCompletion(raw: unknown): TaskCompletion | null {
+  const c = (typeof raw === "object" && raw !== null ? raw : {}) as Partial<TaskCompletion>;
+  if (typeof c.completedAt !== "number" || !Number.isFinite(c.completedAt)) return null;
+  return {
+    completedAt: c.completedAt,
+    plannedFor: typeof c.plannedFor === "number" ? c.plannedFor : null,
+  };
+}
+
 function sanitizeTask(raw: unknown): Task {
   const t = (typeof raw === "object" && raw !== null ? raw : {}) as Partial<Task>;
   return {
@@ -216,6 +264,12 @@ function sanitizeTask(raw: unknown): Task {
     plannedFor: typeof t.plannedFor === "number" ? t.plannedFor : null,
     recurrence: sanitizeRecurrence(t.recurrence),
     order: clampNum(t.order, 0, Number.MAX_SAFE_INTEGER, 0),
+    completions: Array.isArray(t.completions)
+      ? t.completions
+          .map(sanitizeCompletion)
+          .filter((c): c is TaskCompletion => c !== null)
+          .slice(-COMPLETION_LOG_MAX)
+      : [],
   };
 }
 
@@ -330,6 +384,7 @@ export function saveBackup(settings: Settings, state: AppState): void {
     );
   } catch (err) {
     console.error("Failed to save backup.", err);
+    reportQuotaIfExceeded(err);
   }
 }
 
@@ -362,22 +417,38 @@ function snapshotKey(day: string): string {
   return `${SNAPSHOT_PREFIX}${day}`;
 }
 
-/** Save a daily snapshot (no-op if one already exists for today), pruning old ones. */
+/** Save a daily snapshot (no-op if one already exists for today), pruning old ones.
+ *  If the write fails (quota), drop the oldest snapshot and retry once before giving up. */
 export function saveDailySnapshot(settings: Settings, state: AppState): void {
-  try {
-    const day = ymdForDay(Date.now());
-    const key = snapshotKey(day);
-    if (localStorage.getItem(key)) return;
-    localStorage.setItem(key, JSON.stringify({ settings, data: state } satisfies BackupData));
+  const day = ymdForDay(Date.now());
+  const key = snapshotKey(day);
+  if (localStorage.getItem(key)) return;
 
+  const payload = JSON.stringify({ settings, data: state } satisfies BackupData);
+  const write = (): boolean => {
+    try {
+      localStorage.setItem(key, payload);
+      return true;
+    } catch (err) {
+      console.error("Failed to save daily snapshot.", err);
+      reportQuotaIfExceeded(err);
+      return false;
+    }
+  };
+
+  if (!write()) {
     const keys = Object.keys(localStorage)
       .filter((k) => k.startsWith(SNAPSHOT_PREFIX))
       .sort();
-    while (keys.length > SNAPSHOT_MAX) {
-      localStorage.removeItem(keys.shift()!);
-    }
-  } catch (err) {
-    console.error("Failed to save daily snapshot.", err);
+    if (keys.length > 0) localStorage.removeItem(keys[0]);
+    if (!write()) return;
+  }
+
+  const keys = Object.keys(localStorage)
+    .filter((k) => k.startsWith(SNAPSHOT_PREFIX))
+    .sort();
+  while (keys.length > SNAPSHOT_MAX) {
+    localStorage.removeItem(keys.shift()!);
   }
 }
 
@@ -420,6 +491,29 @@ export function removeSnapshot(key: string): void {
     localStorage.removeItem(key);
   } catch {
     // ignore
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* First-run onboarding flag (0070)                                    */
+/* ------------------------------------------------------------------ */
+
+const ONBOARDED_KEY = "latido:onboarded:v1";
+
+/** Whether the first-run welcome has been dismissed (stored separately from data). */
+export function isOnboarded(): boolean {
+  try {
+    return localStorage.getItem(ONBOARDED_KEY) === "1";
+  } catch {
+    return true;
+  }
+}
+
+export function markOnboarded(): void {
+  try {
+    localStorage.setItem(ONBOARDED_KEY, "1");
+  } catch {
+    // non-fatal
   }
 }
 
