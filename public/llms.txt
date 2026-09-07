@@ -1,31 +1,39 @@
 # Latido
 
-> One thing at a time.
+> Work in sync with your natural rhythm.
 
-Latido is a free, browser-only task tracker for people who juggle too much. It pairs a simple
-urgent/important (Eisenhower) task board with the two focus techniques that actually help —
-**Flowtime** for deep, open-ended work and **Pomodoro** for steady progress. No account, no
-subscription, no server: all data lives in the user's browser.
+Latido (Spanish for "heartbeat") is a free, browser-only task tracker for the way your energy
+actually moves — not the way a clock says it should. It syncs tasks and focus sessions with the
+body's natural ultradian rhythm: the ~90-minute waves when people are genuinely sharp, followed
+by the rest they need. **Flowtime** lets users ride a full wave of deep, open-ended work and stop
+when their energy dips; **Pomodoro** is available when they want a structured forcing function
+against procrastination. No account, no subscription, no ads, no tracking: all data lives in the
+user's browser.
 
 ## Key features
 
-- Urgent/important task board with priorities 1–5
-- Pomodoro and Flowtime timers, drift-free (computed from wall-clock timestamps)
-- Recurring tasks: daily, work days (Mon–Fri), weekly, or monthly, with a scheduled time
+- Flowtime focus aligned to the natural ultradian rhythm (count-up, stop when your energy dips)
+- Pomodoro timer with configurable work/break cycles and long-break cadence
+- Urgent/important (Eisenhower) task board with priorities 1–5
+- Recurring routines: daily, work days (Mon–Fri), weekly, or monthly, with a scheduled time
+- Natural-language quick-add (`#tags`, `!priority`, "tomorrow 9am")
 - Quick tasks batched into one continuous focus run
-- Tags, optional time estimates, and task descriptions
 - Plan for today or defer to a later date; overdue tasks are surfaced clearly
-- Session history, focus dashboard (trend charts, quadrant/tag breakdowns), and focus streak
-- Browser notifications and optional sound cues
-- 100% offline-capable: data stored in localStorage, with JSON export/import and Markdown export
-- Dark forest-green theme with a light "day" mode
+- Tags, optional time estimates, and task descriptions
+- Session history, focus dashboard (trend and weekday-rhythm charts, quadrant/tag breakdowns),
+  and focus streak
+- Drift-free timers computed from wall-clock timestamps
+- Browser notifications and optional sound cues (with preview)
+- 100% offline-capable: data in localStorage, JSON export/import, CSV import, Markdown export,
+  automatic backups, and daily snapshots
+- Installable PWA; dark forest-green theme with a light "day" mode
 
 ## How it works
 
-Users add tasks on a board sorted by priority, mark daily routines as recurring, then start a
-Flowtime count-up or a timed Pomodoro session on any task. Completed sessions are recorded in
-history with notes, and the dashboard shows focus totals by day, weekday rhythm, quadrant, and
-tag.
+Users add tasks to an urgent/important board, mark daily routines as recurring, then start a
+Flowtime count-up or a timed Pomodoro session on any task. When their energy dips, they finish
+and take a real break. Completed sessions are recorded in history with notes, and the dashboard
+shows focus totals by day, weekday rhythm, quadrant, and tag.
 
 ## Tech
 

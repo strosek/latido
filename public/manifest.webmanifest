@@ -1,7 +1,7 @@
 {
   "name": "Latido",
   "short_name": "Latido",
-  "description": "Simple, calm task tracking with pomodoro and flowtime focus sessions.",
+  "description": "Free, private task tracker and focus timer that works with your body's natural rhythm.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0f1a14",

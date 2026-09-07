@@ -1,44 +1,56 @@
 # Latido
 
-_One thing at a time._
+_Work in sync with your natural rhythm._
 
-Latido is a calm, free, browser-only task tracker for people who juggle too much. It pairs a
-simple urgent/important task board with the two focus techniques that actually help — **Flowtime**
-for deep, open-ended work and **Pomodoro** for steady progress — and it never asks for an account,
-a subscription, or a server to think about.
+Latido (Spanish for "heartbeat") is a free, browser-only task tracker for the way your energy
+actually moves — not the way a clock says it should. It syncs your tasks and focus sessions with
+your body's natural pulses: the ~90-minute ultradian waves when you're genuinely sharp, followed
+by the rest you actually need.
 
-Your data lives in your browser. Open it, add a task, start focusing.
+**Flowtime** lets you ride a whole wave of deep, open-ended work and stop when your energy dips —
+not when a timer interrupts you. **Pomodoro** is still there for the days you need a forcing
+function against procrastination. Same app, two honest tools, chosen by you.
+
+No account. No subscription. No ads. No tracking. Your data lives in your browser.
 
 ## Why Latido?
 
-Built for the people who like Flowtime and don't want to pay for an app this simple — or lose their
-peace of mind to feature creep. It is designed to be:
+Most focus apps are Pomodoro timers in disguise: rigid 25-minute blocks that interrupt you
+precisely when you're in flow. That's a useful forcing function if you're avoiding work — and
+distracting if you're not. Latido is built on the opposite assumption: you'll focus better when
+your work follows your body's natural rhythm.
 
-- **Minimal.** Few buttons, quiet colors, nothing to configure before it is useful.
-- **Calming.** A biophilic, dark-by-default theme inspired by forest greens.
-- **Kind to a busy mind.** Prioritize and sort urgent vs. important, and let today's focus be a
-  single reassuring number instead of a wall of todos.
-- **Honest about time.** Timing is computed from wall-clock timestamps, so sessions never drift —
+- **Built for your ultradian rhythm.** Flowtime's count-up timer lets you work through a full
+  wave of deep focus and take a real break when your energy drops — not when a bell rings.
+- **Free and private, honestly.** No subscription, no account, no telemetry. Everything lives on
+  your device and is yours forever.
+- **Calm by design.** A quiet, forest-green interface with nothing to configure before it's
+  useful. Few buttons, one thing at a time.
+- **Kind to a busy mind.** An urgent/important board, a single reassuring focus total for today,
+  and no feature creep.
+- **Honest about time.** Sessions are computed from wall-clock timestamps, so they never drift —
   even if you close the laptop and come back.
 
 ## Features
 
-### Tasks, organized
+### Tasks that follow your rhythm
 
 - Priorities 1–5 and the Eisenhower quadrant (urgent / important)
-- Tags (`#errands`), descriptions, and optional time estimates
-- Plan for today or defer to a later date; overdue is surfaced clearly
-- Quick tasks for the tiny stuff, batched into one continuous run
-- Recurring tasks (daily, work days, weekly, or monthly) with a scheduled time that reopen after completion
+- Plan for today, defer to a later date, or set a recurring routine (daily, work days, weekly,
+  monthly) with a scheduled time that reopens after completion
 - Natural-language quick-add (`#tags`, `!priority`, "tomorrow 9am")
+- Tags (`#errands`), descriptions, and optional time estimates
+- Quick tasks for the tiny stuff, batched into one continuous run
 - Manual drag-and-drop ordering alongside priority/type/newest sort
 - Search, filter, and sort
 - Undo toasts for completing, deleting, and rescheduling tasks
 
 ### Focus, your way
 
-- **Flowtime** — open-ended, count-up sessions with a suggested break when you finish
-- **Pomodoro** — work/break cycles with configurable durations and long-break cadence
+- **Flowtime** — open-ended, count-up sessions for riding a full ultradian wave, with a suggested
+  break when you finish
+- **Pomodoro** — work/break cycles with configurable durations and long-break cadence, when you
+  want structure
 - Drift-free timers derived from timestamps (no clock drift)
 - Automatic break countdown after a session
 - **Focus mode** — hides everything but the clock and the current task

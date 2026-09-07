@@ -739,19 +739,21 @@ function openAboutModal(): void {
   const overlay = openDialog(`
     <h3>About Latido</h3>
     <div class="about">
-      <p><strong>One thing at a time.</strong> Latido is a calm, free, browser-only task
-      tracker. No account, no server, no tracking — your data lives in your browser.</p>
-      <h4>Philosophy</h4>
-      <p>Built for people who like <strong>Flowtime</strong> (deep, open-ended focus) and
-      <strong>Pomodoro</strong> (steady progress). Prioritize what's urgent and important, keep
-      the noise down, and let today's focus be a single reassuring number.</p>
+      <p><strong>Work in sync with your natural rhythm.</strong> Latido is a free, browser-only
+      task tracker that syncs your tasks and focus sessions with your body's natural pulses —
+      the ~90-minute ultradian waves when you're genuinely sharp, followed by the rest you need.</p>
+      <h4>Why it works</h4>
+      <p>Most focus apps interrupt you right when you're in flow. Latido treats <strong>Flowtime</strong>
+      (count-up, work until your energy dips) as the default way to focus, and keeps
+      <strong>Pomodoro</strong> around for when you need a forcing function against
+      procrastination. No account, no subscription, no tracking — your data lives in your browser.</p>
       <h4>Get started</h4>
       <ul>
         <li>Add a task, pick a priority (1–5) and a quadrant (urgent / important).</li>
         <li>Mark recurring routines (<em>daily</em>, <em>work days</em>, <em>weekly</em>,
           <em>monthly</em>) with the repeat menu on each task.</li>
-        <li>Hit <strong>play</strong> on a task to start a Pomodoro or Flowtime session; finish
-          to record it and take a break.</li>
+        <li>Hit <strong>play</strong> on a task to start a Flowtime or Pomodoro session; finish
+          when your energy dips and take a real break.</li>
         <li>Use tags (<code>#work</code>) and the search box to find things fast.</li>
         <li>Your history and focus dashboard show where your time actually went.</li>
       </ul>

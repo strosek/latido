@@ -122,7 +122,7 @@ function pageHeaderHtml(): string {
         <button class="icon-btn about-btn" data-action="open-about" title="About Latido" aria-label="About Latido">${icon("info")}</button>
         <div>
           <h1>Latido</h1>
-          <p class="tagline">Focus on one thing at a time.</p>
+          <p class="tagline">Work in sync with your natural rhythm.</p>
         </div>
       </div>
       <nav class="header-actions">
