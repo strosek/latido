@@ -120,11 +120,11 @@ function pageHeaderHtml(): string {
     <header class="app-header">
       <div class="app-title">
         <img class="logo" src="favicon.svg" alt="Latido logo" />
-        <button class="icon-btn about-btn" data-action="open-about" title="About Latido" aria-label="About Latido">${icon("info")}</button>
         <div>
           <h1>Latido</h1>
           <p class="tagline">Work in sync with your natural rhythm.</p>
         </div>
+        <button class="icon-btn about-btn" data-action="open-about" title="About Latido" aria-label="About Latido">${icon("info")}</button>
       </div>
       <nav class="header-actions">
         <button class="icon-btn" data-action="toggle-theme" title="Switch to ${targetLabel} mode" aria-label="Switch to ${targetLabel} mode" aria-pressed="${settings.theme === "night" ? "true" : "false"}">${icon(settings.theme === "night" ? "sun" : "moon")}</button>
@@ -500,7 +500,7 @@ function renderBoard(): void {
       </div>
     </section>
 
-    ${boardControlsHtml()}
+    ${state.tasks.length ? boardControlsHtml() : ""}
 
     ${planListHtml("Today", todayOpen)}
 
