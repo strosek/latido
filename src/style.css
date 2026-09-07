@@ -139,6 +139,12 @@ h1 {
   gap: 10px;
 }
 
+.logo {
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+
 .about-btn {
   flex: none;
 }

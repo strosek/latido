@@ -119,6 +119,7 @@ function pageHeaderHtml(): string {
   return `
     <header class="app-header">
       <div class="app-title">
+        <img class="logo" src="favicon.svg" alt="Latido logo" />
         <button class="icon-btn about-btn" data-action="open-about" title="About Latido" aria-label="About Latido">${icon("info")}</button>
         <div>
           <h1>Latido</h1>
