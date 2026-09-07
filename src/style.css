@@ -145,10 +145,6 @@ h1 {
   flex: none;
 }
 
-.about-btn {
-  flex: none;
-}
-
 /* About modal (0044) */
 
 .about h4 {
@@ -230,6 +226,10 @@ h1 {
   gap: 6px;
   align-self: flex-end;
   cursor: pointer;
+}
+
+.add-task-row .primary {
+  margin-left: auto;
 }
 
 select,
@@ -526,6 +526,13 @@ a.ghost:hover {
 .session-controls {
   display: flex;
   gap: 12px;
+}
+
+.session-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .notes {

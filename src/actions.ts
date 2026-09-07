@@ -1371,8 +1371,8 @@ function promptStartSession(taskId: string): void {
   const overlay = openDialog(`
     <h3>Start a session</h3>
     <p class="dialog-task">${escapeHtml(task.title)}</p>
-    <button class="primary" data-tech="pomodoro">Pomodoro · ${workLabel}</button>
     <button class="primary" data-tech="flowtime">Flowtime · open</button>
+    <button class="primary" data-tech="pomodoro">Pomodoro · ${workLabel}</button>
     <button class="ghost" data-tech="cancel">Cancel</button>`);
 
   overlay.addEventListener("click", (e) => {

@@ -124,13 +124,13 @@ function pageHeaderHtml(): string {
           <h1>Latido</h1>
           <p class="tagline">Work in sync with your natural rhythm.</p>
         </div>
-        <button class="icon-btn about-btn" data-action="open-about" title="About Latido" aria-label="About Latido">${icon("info")}</button>
       </div>
       <nav class="header-actions">
         <button class="icon-btn" data-action="toggle-theme" title="Switch to ${targetLabel} mode" aria-label="Switch to ${targetLabel} mode" aria-pressed="${settings.theme === "night" ? "true" : "false"}">${icon(settings.theme === "night" ? "sun" : "moon")}</button>
         <button class="icon-btn" data-action="view-dashboard" title="Dashboard" aria-label="Dashboard">${icon("dashboard")}</button>
         <button class="icon-btn" data-action="view-history" title="History" aria-label="History">${icon("history")}</button>
         <button class="icon-btn" data-action="open-settings" title="Settings" aria-label="Settings">${icon("settings")}</button>
+        <button class="icon-btn" data-action="open-about" title="About Latido" aria-label="About Latido">${icon("info")}</button>
       </nav>
     </header>`;
 }
@@ -857,11 +857,11 @@ function renderSession(session: Session): void {
       <div class="session-controls">
         ${
           session.status === "running"
-            ? `<button class="primary" data-action="pause">${icon("pause")} Pause</button>`
-            : `<button class="primary" data-action="resume">${icon("play")} Resume</button>`
+            ? `<button class="ghost" data-action="pause">${icon("pause")} Pause</button>`
+            : `<button class="ghost" data-action="resume">${icon("play")} Resume</button>`
         }
-        <button class="ghost" data-action="toggle-focus">Focus</button>
-        <button class="ghost" data-action="finish">${icon("check")} Finish</button>
+        <button class="ghost" data-action="toggle-focus">${icon("target")} Focus</button>
+        <button class="primary" data-action="finish">${icon("check")} Finish</button>
       </div>
 
       <section class="notes">
