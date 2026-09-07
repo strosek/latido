@@ -2,6 +2,7 @@ import {
   activeSession,
   breakState,
   descriptionHintVisible,
+  doneSectionOpen,
   filterPriority,
   filterQuadrant,
   focusMode,
@@ -466,10 +467,15 @@ function renderBoard(): void {
   );
   const mainTasks = sortedTasks(
     state.tasks
-      .filter((t) => !isTodayOpen(t) && !isFutureOpen(t) && !(t.quick && !t.done))
+      .filter((t) => !isTodayOpen(t) && !isFutureOpen(t) && !(t.quick && !t.done) && !t.done)
       .filter(matchesFilters)
       .filter(matchesSearch),
   );
+
+  // 0075: completed tasks live in a folded "Completed" section at the bottom.
+  const doneTasks = state.tasks
+    .filter((t) => t.done && matchesFilters(t) && matchesSearch(t))
+    .sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0) || a.createdAt - b.createdAt);
 
   const totals = new Map<string, ReturnType<typeof taskTotals>>();
   for (const t of state.tasks) totals.set(t.id, taskTotals(t.id, state.sessions, settings));
@@ -477,30 +483,54 @@ function renderBoard(): void {
   // 0060: manual-order position of each open task, to disable Move up/down at the edges.
   const openManual = sortBy === "manual" ? sortedTasks(state.tasks.filter((t) => !t.done)) : [];
 
-  const rows = mainTasks
-    .map((task) => {
-      const t = totals.get(task.id)!;
-      const bits: string[] = [];
-      if (settings.showEstimates && task.estimatedMin != null) {
-        bits.push(`est ${formatDuration(task.estimatedMin * 60_000)}`);
-      }
-      if (t.workMs > 0) bits.push(formatDuration(t.workMs));
-      if (t.sessionCount > 0)
-        bits.push(`${t.sessionCount} session${t.sessionCount === 1 ? "" : "s"}`);
-      if (t.pomodoroCount > 0)
-        bits.push(`${t.pomodoroCount} pomodoro${t.pomodoroCount === 1 ? "" : "s"}`);
+  const rowFor = (task: Task, opts: { done?: boolean }): string => {
+    const t = totals.get(task.id)!;
+    const bits: string[] = [];
+    if (settings.showEstimates && task.estimatedMin != null) {
+      bits.push(`est ${formatDuration(task.estimatedMin * 60_000)}`);
+    }
+    if (t.workMs > 0) bits.push(formatDuration(t.workMs));
+    if (t.sessionCount > 0)
+      bits.push(`${t.sessionCount} session${t.sessionCount === 1 ? "" : "s"}`);
+    if (t.pomodoroCount > 0)
+      bits.push(`${t.pomodoroCount} pomodoro${t.pomodoroCount === 1 ? "" : "s"}`);
 
-      const manualIdx = openManual.findIndex((t) => t.id === task.id);
-      const moveButtons =
-        sortBy === "manual" && !task.done
-          ? `
+    const manualIdx = openManual.findIndex((o) => o.id === task.id);
+    const moveButtons =
+      sortBy === "manual" && !task.done && !opts.done
+        ? `
                   <button data-action="move-task" data-id="${task.id}" data-dir="up" ${manualIdx <= 0 ? "disabled" : ""}>Move up</button>
                   <button data-action="move-task" data-id="${task.id}" data-dir="down" ${manualIdx < 0 || manualIdx >= openManual.length - 1 ? "disabled" : ""}>Move down</button>`
-          : "";
+        : "";
 
-      return `
+    const menuHtml = opts.done
+      ? `
+                  <button data-action="edit" data-id="${task.id}">Edit</button>
+                  <button data-action="task-history" data-id="${task.id}">History</button>
+                  <button data-action="delete" data-id="${task.id}">Delete</button>`
+      : `
+                  <button data-action="today" data-id="${task.id}">${isTodayOpen(task) ? "Unplan today" : "Plan today"}</button>
+                  <button data-action="defer" data-id="${task.id}">Defer…</button>
+                  <button data-action="repeats" data-id="${task.id}">${task.recurrence ? `Repeats: ${recurrenceLabel(task.recurrence)}` : "Repeat…"}</button>
+                  ${moveButtons}
+                  <button data-action="edit" data-id="${task.id}">Edit</button>
+                  <button data-action="task-history" data-id="${task.id}">History</button>
+                  <button data-action="delete" data-id="${task.id}">Delete</button>`;
+
+    // The start button is always visible so it's obvious where to begin work.
+    const startButton = opts.done
+      ? ""
+      : `<div class="task-start">
+          <button class="primary icon-btn" data-action="start" data-id="${task.id}" title="Start a session" aria-label="Start a session">${icon("play")}</button>
+        </div>`;
+
+    const quickButton = opts.done
+      ? ""
+      : `<button class="icon-btn ${task.quick ? "on" : ""}" data-action="toggle-quick" data-id="${task.id}" title="${task.quick ? "Remove quick mark" : "Mark as quick"}" aria-label="${task.quick ? "Remove quick mark" : "Mark as quick"}" aria-pressed="${task.quick ? "true" : "false"}">${icon("bolt")}</button>`;
+
+    return `
       <li class="task ${task.quadrant} ${task.done ? "done" : ""} ${isOverdueOpen(task) ? "overdue" : ""}" data-id="${task.id}">
-        ${sortBy === "manual" && !task.done ? `<button class="icon-btn grip" data-grip title="Reorder" aria-label="Reorder ${escapeHtml(task.title)}">${icon("grip")}</button>` : ""}
+        ${sortBy === "manual" && !task.done && !opts.done ? `<button class="icon-btn grip" data-grip title="Reorder" aria-label="Reorder ${escapeHtml(task.title)}">${icon("grip")}</button>` : ""}
         <button class="check" data-action="toggle" data-id="${task.id}" aria-label="Toggle done" aria-pressed="${task.done ? "true" : "false"}">${task.done ? "✓" : ""}</button>
         <div class="task-body">
           <span class="task-title">${escapeHtml(task.title)}${recurrenceBadgeHtml(task.recurrence)}${isOverdueOpen(task) ? `<span class="overdue-badge">overdue</span>` : ""}</span>
@@ -522,27 +552,17 @@ function renderBoard(): void {
           </span>
         </div>
         ${bits.length ? `<span class="task-stats">${bits.join(" · ")}</span>` : ""}
+        ${startButton}
         <div class="task-actions">
-          <button class="primary icon-btn" data-action="start" data-id="${task.id}" title="Start a session" aria-label="Start a session">${icon("play")}</button>
-          <button class="icon-btn ${task.quick ? "on" : ""}" data-action="toggle-quick" data-id="${task.id}" title="${task.quick ? "Remove quick mark" : "Mark as quick"}" aria-label="${task.quick ? "Remove quick mark" : "Mark as quick"}" aria-pressed="${task.quick ? "true" : "false"}">${icon("bolt")}</button>
+          ${quickButton}
           <button class="icon-btn" data-action="open-menu" data-id="${task.id}" title="More actions" aria-label="More actions">${icon("dots")}</button>
-          ${
-            openMenuTaskId === task.id
-              ? `<div class="row-menu" data-menu>
-                  <button data-action="today" data-id="${task.id}">${isTodayOpen(task) ? "Unplan today" : "Plan today"}</button>
-                  <button data-action="defer" data-id="${task.id}">Defer…</button>
-                  <button data-action="repeats" data-id="${task.id}">${task.recurrence ? `Repeats: ${recurrenceLabel(task.recurrence)}` : "Repeat…"}</button>
-                  ${moveButtons}
-                  <button data-action="edit" data-id="${task.id}">Edit</button>
-                  <button data-action="task-history" data-id="${task.id}">History</button>
-                  <button data-action="delete" data-id="${task.id}">Delete</button>
-                </div>`
-              : ""
-          }
+          ${openMenuTaskId === task.id ? `<div class="row-menu" data-menu>${menuHtml}</div>` : ""}
         </div>
       </li>`;
-    })
-    .join("");
+  };
+
+  const rows = mainTasks.map((task) => rowFor(task, {})).join("");
+  const doneRows = doneTasks.map((task) => rowFor(task, { done: true })).join("");
 
   const quickSection = quickTasks.length
     ? `<section class="quick-section">
@@ -561,6 +581,19 @@ function renderBoard(): void {
             .join("")}
         </ul>
       </section>`
+    : "";
+
+  // 0075: folded "Completed" section — one compact header row until expanded.
+  const doneSection = doneTasks.length
+    ? `
+    <section class="done-section ${doneSectionOpen ? "open" : ""}">
+      <button class="done-toggle" data-action="toggle-done-section" aria-expanded="${doneSectionOpen ? "true" : "false"}" aria-controls="done-list">
+        <span class="done-title">Completed</span>
+        <span class="done-count">${doneTasks.length}</span>
+        <span class="done-chevron">${icon("chevron")}</span>
+      </button>
+      ${doneSectionOpen ? `<ul id="done-list" class="task-list done-list">${doneRows}</ul>` : ""}
+    </section>`
     : "";
 
   const hasFilters =
@@ -584,7 +617,8 @@ function renderBoard(): void {
     !mainTasks.length &&
     !todayOpen.length &&
     !laterOpen.length &&
-    !quickTasks.length
+    !quickTasks.length &&
+    !doneTasks.length
   ) {
     const cta = `<div class="empty-actions"><button class="ghost" data-action="clear-filters">Clear filters</button></div>`;
     emptyHtml = emptyStateHtml(
@@ -663,6 +697,7 @@ function renderBoard(): void {
 
     ${planListHtml("Later", laterOpen, "deferred")}
     ${quickSection}
+    ${doneSection}
     <p class="shortcut-hint"><span class="hint-text"><strong>N</strong> new task · <strong>/</strong> search · <strong>?</strong> shortcuts · <strong>Esc</strong> close menus</span>${koFiHtml()}</p>`,
   );
 }

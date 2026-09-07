@@ -36,6 +36,9 @@ export let searchQuery = "";
 /** 0037: which task row has its "⋯" menu open. */
 export let openMenuTaskId: string | null = null;
 
+/** 0075: whether the collapsed "Completed" section is expanded. */
+export let doneSectionOpen = false;
+
 /** 0035: hidden-period tracking for the idle nudge. */
 export let hiddenAt: number | null = null;
 export let hiddenSessionId: string | null = null;
@@ -93,6 +96,10 @@ export function setSearchQuery(next: string): void {
 
 export function setOpenMenuTaskId(next: string | null): void {
   openMenuTaskId = next;
+}
+
+export function setDoneSectionOpen(next: boolean): void {
+  doneSectionOpen = next;
 }
 
 export function setHiddenAt(next: number | null): void {

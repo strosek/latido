@@ -15,6 +15,7 @@ import {
   activeSession,
   applyTheme,
   breakState,
+  doneSectionOpen,
   focusMode,
   lastFinished,
   openMenuTaskId,
@@ -22,6 +23,7 @@ import {
   quickRun,
   setBreakState,
   setDescriptionHintVisible,
+  setDoneSectionOpen,
   setFilterPriority,
   setFilterQuadrant,
   setFocusMode,
@@ -85,6 +87,20 @@ function nextManualOrder(): number {
 /* Undo toasts (0045)                                                  */
 /* ------------------------------------------------------------------ */
 
+/** Fixed bottom-right stack for all toasts, so several can coexist. */
+function toastRegion(): HTMLElement {
+  let region = document.getElementById("toast-region");
+  if (!region) {
+    region = document.createElement("div");
+    region.id = "toast-region";
+    region.className = "toast-region";
+    region.setAttribute("role", "status");
+    region.setAttribute("aria-live", "polite");
+    document.body.appendChild(region);
+  }
+  return region;
+}
+
 function showUndoToast(message: string, onUndo: () => void): void {
   document.querySelectorAll(".toast").forEach((t) => t.remove());
   const toast = document.createElement("div");
@@ -92,7 +108,7 @@ function showUndoToast(message: string, onUndo: () => void): void {
   toast.innerHTML = `
     <span class="toast-text">${escapeHtml(message)}</span>
     <button id="undo-action" class="primary">Undo</button>`;
-  document.body.appendChild(toast);
+  toastRegion().appendChild(toast);
   const dismiss = (): void => toast.remove();
   toast.querySelector("#undo-action")!.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -804,79 +820,88 @@ function openSettings(): void {
   const overlay = openDialog(`
     <h3>Settings</h3>
     <form id="settings-form">
-      <div class="settings-grid">
-        <label class="field">
-          <span>Pomodoro focus (min)</span>
-          <input type="number" id="set-work" min="1" max="120" value="${settings.pomodoroWorkMin}" />
-        </label>
-        <label class="field">
-          <span>Short break (min)</span>
-          <input type="number" id="set-short" min="1" max="60" value="${settings.pomodoroShortBreakMin}" />
-        </label>
-        <label class="field">
-          <span>Long break (min)</span>
-          <input type="number" id="set-long" min="1" max="90" value="${settings.pomodoroLongBreakMin}" />
-        </label>
-        <label class="field">
-          <span>Long break after (#)</span>
-          <input type="number" id="set-long-every" min="1" max="12" value="${settings.pomodoroLongBreakEvery}" />
-        </label>
-        <label class="field">
-          <span>Flowtime break (% of focus)</span>
-          <input type="number" id="set-break-ratio" min="0" max="100" step="5" value="${Math.round(settings.flowtimeBreakRatio * 100)}" />
-        </label>
-        <label class="field">
-          <span>Max flowtime (min, 0 = off)</span>
-          <input type="number" id="set-max-flowtime" min="0" max="1440" value="${settings.maxFlowtimeMin}" />
-        </label>
-        <label class="field">
-          <span>Flowtime gentle reminder (min, 0 = off)</span>
-          <input type="number" id="set-flow-nudge" min="0" max="1440" value="${settings.flowtimeNudgeMin}" />
-          <span class="field-hint">Gently remind you to stop after N minutes.</span>
-        </label>
-        <label class="field">
-          <span>Sound preset</span>
-          <div class="field-row">
-            <select id="set-preset">
-              <option value="chime" ${settings.soundPreset === "chime" ? "selected" : ""}>Chime</option>
-              <option value="soft" ${settings.soundPreset === "soft" ? "selected" : ""}>Soft</option>
-              <option value="breeze" ${settings.soundPreset === "breeze" ? "selected" : ""}>Breeze</option>
-            </select>
-            <button type="button" id="btn-preview-sound" class="ghost">Preview</button>
-          </div>
-        </label>
-        <label class="field check-field">
-          <span>Sound cues</span>
-          <input type="checkbox" id="set-sound" ${settings.soundEnabled ? "checked" : ""} />
-        </label>
-        <label class="field check-field">
-          <span>Auto-start break</span>
-          <input type="checkbox" id="set-auto-break" ${settings.autoBreak ? "checked" : ""} />
-        </label>
-        <label class="field check-field">
-          <span>Task estimates</span>
-          <input type="checkbox" id="set-estimates" ${settings.showEstimates ? "checked" : ""} />
-        </label>
-        <label class="field check-field">
-          <span>Browser notifications</span>
-          <input type="checkbox" id="set-notifications" ${settings.notificationsEnabled ? "checked" : ""} />
-        </label>
+      <div class="settings-tabs" role="tablist" aria-label="Settings sections">
+        <button type="button" id="tab-basic" class="settings-tab" role="tab" aria-selected="true" aria-controls="panel-basic" data-tab="basic" tabindex="0">Basic</button>
+        <button type="button" id="tab-advanced" class="settings-tab" role="tab" aria-selected="false" aria-controls="panel-advanced" data-tab="advanced" tabindex="-1">Advanced<span class="tab-count" aria-hidden="true"></span></button>
       </div>
 
-      <h4 class="dialog-section">Data</h4>
-      <div class="data-actions">
-        <button type="button" id="btn-export" class="ghost">Export data</button>
-        <button type="button" id="btn-export-md" class="ghost">Export history (Markdown)</button>
-        <button type="button" id="btn-import" class="ghost">Import data</button>
-        <button type="button" id="btn-import-csv" class="ghost">Import CSV</button>
-        <button type="button" id="btn-restore" class="ghost">Restore last backup</button>
-        <button type="button" id="btn-snapshots" class="ghost">Restore snapshot…</button>
-        <a class="ghost" href="${ISSUES_URL}" target="_blank" rel="noopener noreferrer">Feedback</a>
+      <div id="panel-basic" class="settings-panel" role="tabpanel" aria-labelledby="tab-basic">
+        <div class="settings-grid">
+          <label class="field">
+            <span>Pomodoro focus (min)</span>
+            <input type="number" id="set-work" min="1" max="120" value="${settings.pomodoroWorkMin}" />
+          </label>
+          <label class="field">
+            <span>Short break (min)</span>
+            <input type="number" id="set-short" min="1" max="60" value="${settings.pomodoroShortBreakMin}" />
+          </label>
+          <label class="field">
+            <span>Long break (min)</span>
+            <input type="number" id="set-long" min="1" max="90" value="${settings.pomodoroLongBreakMin}" />
+          </label>
+          <label class="field">
+            <span>Long break after (#)</span>
+            <input type="number" id="set-long-every" min="1" max="12" value="${settings.pomodoroLongBreakEvery}" />
+          </label>
+          <label class="field">
+            <span>Flowtime break (% of focus)</span>
+            <input type="number" id="set-break-ratio" min="0" max="100" step="5" value="${Math.round(settings.flowtimeBreakRatio * 100)}" />
+          </label>
+          <label class="field">
+            <span>Max flowtime (min, 0 = off)</span>
+            <input type="number" id="set-max-flowtime" min="0" max="1440" value="${settings.maxFlowtimeMin}" />
+          </label>
+          <label class="field">
+            <span>Flowtime gentle reminder (min, 0 = off)</span>
+            <input type="number" id="set-flow-nudge" min="0" max="1440" value="${settings.flowtimeNudgeMin}" />
+            <span class="field-hint">Gently remind you to stop after N minutes.</span>
+          </label>
+          <label class="field">
+            <span>Sound preset</span>
+            <div class="field-row">
+              <select id="set-preset">
+                <option value="chime" ${settings.soundPreset === "chime" ? "selected" : ""}>Chime</option>
+                <option value="soft" ${settings.soundPreset === "soft" ? "selected" : ""}>Soft</option>
+                <option value="breeze" ${settings.soundPreset === "breeze" ? "selected" : ""}>Breeze</option>
+              </select>
+              <button type="button" id="btn-preview-sound" class="ghost">Preview</button>
+            </div>
+          </label>
+          <label class="field check-field">
+            <span>Sound cues</span>
+            <input type="checkbox" id="set-sound" ${settings.soundEnabled ? "checked" : ""} />
+          </label>
+          <label class="field check-field">
+            <span>Auto-start break</span>
+            <input type="checkbox" id="set-auto-break" ${settings.autoBreak ? "checked" : ""} />
+          </label>
+          <label class="field check-field">
+            <span>Task estimates</span>
+            <input type="checkbox" id="set-estimates" ${settings.showEstimates ? "checked" : ""} />
+          </label>
+          <label class="field check-field">
+            <span>Browser notifications</span>
+            <input type="checkbox" id="set-notifications" ${settings.notificationsEnabled ? "checked" : ""} />
+          </label>
+        </div>
       </div>
 
-      <h4 class="dialog-section danger">Danger zone</h4>
-      <div class="data-actions">
-        <button type="button" id="btn-clear" class="danger-btn">Clear data</button>
+      <div id="panel-advanced" class="settings-panel" role="tabpanel" aria-labelledby="tab-advanced" hidden>
+        <h4 class="dialog-section">Data</h4>
+        <div class="data-actions">
+          <button type="button" id="btn-export" class="ghost">Export data</button>
+          <button type="button" id="btn-export-md" class="ghost">Export history (Markdown)</button>
+          <button type="button" id="btn-import" class="ghost">Import data</button>
+          <button type="button" id="btn-import-csv" class="ghost">Import CSV</button>
+          <button type="button" id="btn-restore" class="ghost">Restore last backup</button>
+          <button type="button" id="btn-snapshots" class="ghost">Restore snapshot…</button>
+          <a class="ghost" href="${ISSUES_URL}" target="_blank" rel="noopener noreferrer">Feedback</a>
+        </div>
+
+        <h4 class="dialog-section danger">Danger zone</h4>
+        <div class="data-actions">
+          <button type="button" id="btn-clear" class="danger-btn">Clear data</button>
+        </div>
       </div>
 
       <div class="dialog-actions">
@@ -895,6 +920,40 @@ function openSettings(): void {
   const snapshotsBtn = overlay.querySelector<HTMLButtonElement>("#btn-snapshots")!;
   const clearBtn = overlay.querySelector<HTMLButtonElement>("#btn-clear")!;
   const previewBtn = overlay.querySelector<HTMLButtonElement>("#btn-preview-sound")!;
+
+  // 0076: Basic / Advanced tabs — panels are toggled (never rebuilt) so typed
+  // values survive switching; arrow keys move between tabs (roving tabindex).
+  const tabs = Array.from(overlay.querySelectorAll<HTMLButtonElement>(".settings-tab"));
+  const panels = {
+    basic: overlay.querySelector<HTMLElement>("#panel-basic")!,
+    advanced: overlay.querySelector<HTMLElement>("#panel-advanced")!,
+  };
+  const showTab = (name: "basic" | "advanced"): void => {
+    for (const tab of tabs) {
+      const on = tab.dataset.tab === name;
+      tab.setAttribute("aria-selected", on ? "true" : "false");
+      tab.tabIndex = on ? 0 : -1;
+    }
+    panels.basic.hidden = name !== "basic";
+    panels.advanced.hidden = name !== "advanced";
+  };
+  tabs.forEach((tab, i) => {
+    tab.addEventListener("click", () => showTab(tab.dataset.tab as "basic" | "advanced"));
+    tab.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      e.preventDefault();
+      const next =
+        e.key === "ArrowRight" ? (i + 1) % tabs.length : (i - 1 + tabs.length) % tabs.length;
+      showTab(tabs[next].dataset.tab as "basic" | "advanced");
+      tabs[next].focus();
+    });
+  });
+  const countEl = overlay.querySelector<HTMLElement>("#tab-advanced .tab-count");
+  if (countEl) {
+    countEl.textContent = String(
+      overlay.querySelectorAll("#panel-advanced .data-actions > *").length,
+    );
+  }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -1259,6 +1318,7 @@ function resetTransientState(): void {
   setLastWatch(null);
   setLastFinished(null);
   setOpenMenuTaskId(null);
+  setDoneSectionOpen(false);
   setHiddenAt(null);
   setHiddenSessionId(null);
   stopRepaint();
@@ -1658,7 +1718,7 @@ function showFinishToast(session: Session, line: string): void {
     <span class="toast-text"><strong>Finished</strong> · ${escapeHtml(task?.title ?? "task")} · ${escapeHtml(line)}</span>
     ${nextHtml}
     <button id="undo-finish" class="primary">Undo</button>`;
-  document.body.appendChild(toast);
+  toastRegion().appendChild(toast);
 
   const dismiss = (): void => {
     if (lastFinished?.session.id === session.id) setLastFinished(null);
@@ -1740,7 +1800,7 @@ export function showIdleToast(session: Session): void {
     <span class="toast-text"><strong>Session still running</strong> · ${escapeHtml(task?.title ?? "task")}</span>
     <button id="idle-pause" class="ghost">Pause</button>
     <button id="idle-finish" class="primary">Finish</button>`;
-  document.body.appendChild(toast);
+  toastRegion().appendChild(toast);
 
   const dismiss = (): void => toast.remove();
   toast.querySelector("#idle-pause")!.addEventListener("click", (e) => {
@@ -1776,7 +1836,7 @@ export function showFlowtimeNudge(session: Session, minutes: number): void {
     <span class="toast-text"><strong>Flowtime reminder</strong> · ${escapeHtml(message)}</span>
     <button id="nudge-finish" class="primary">Finish</button>
     <button id="nudge-keep" class="ghost">Keep going</button>`;
-  document.body.appendChild(toast);
+  toastRegion().appendChild(toast);
   const dismiss = (): void => toast.remove();
   toast.querySelector("#nudge-finish")!.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -1906,6 +1966,10 @@ export function handleAction(
       setSearchQuery("");
       setFilterPriority(null);
       setFilterQuadrant(null);
+      render();
+      break;
+    case "toggle-done-section":
+      setDoneSectionOpen(!doneSectionOpen);
       render();
       break;
     case "toggle-focus":

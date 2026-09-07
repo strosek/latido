@@ -13,12 +13,13 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   localStorage.clear();
-  const { setState, setSettings } = await import("./state");
+  const { setDoneSectionOpen, setState, setSettings } = await import("./state");
   const { emptyState } = await import("./storage");
   const { DEFAULT_SETTINGS } = await import("./types");
   const { render } = await import("./views");
   setState(emptyState());
   setSettings({ ...DEFAULT_SETTINGS });
+  setDoneSectionOpen(false);
   render();
 });
 
@@ -75,7 +76,7 @@ describe("completion animation (0067)", () => {
     expect(btn.classList.contains("checking")).toBe(true);
     await sleep(220);
     expect(state.tasks[0].done).toBe(true);
-    expect(document.querySelector("#app")!.innerHTML).toContain('class="task q2 done');
+    expect(document.querySelector("#app")!.innerHTML).toContain("done-section");
   });
 });
 
@@ -93,5 +94,109 @@ describe("reorder undo (0074)", () => {
     const undo = document.querySelector<HTMLElement>("#undo-action")!;
     undo.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(state.tasks.find((t) => t.id === first.id)!.order).toBe(1);
+  });
+});
+
+describe("always-visible start button", () => {
+  it("renders the start button outside the hover-only actions", () => {
+    addTask("Review email");
+    const row = document.querySelector<HTMLElement>(".task")!;
+    expect(row.querySelector(".task-start")).not.toBeNull();
+    expect(row.querySelector<HTMLElement>(".task-start [data-action='start']")).not.toBeNull();
+  });
+});
+
+describe("settings tabs (0076)", () => {
+  const openSettings = (): HTMLElement => {
+    document
+      .querySelector<HTMLElement>('[data-action="open-settings"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return document.querySelector<HTMLElement>(".overlay")!;
+  };
+
+  it("opens on Basic and switches to Advanced on click", () => {
+    const overlay = openSettings();
+    expect(overlay.querySelector("#panel-basic")!.hasAttribute("hidden")).toBe(false);
+    expect(overlay.querySelector("#panel-advanced")!.hasAttribute("hidden")).toBe(true);
+    expect(overlay.querySelector("#tab-basic")!.getAttribute("aria-selected")).toBe("true");
+    // The Advanced tab carries a count of the data/danger controls behind it.
+    expect(overlay.querySelector("#tab-advanced .tab-count")!.textContent).toBe("8");
+
+    overlay
+      .querySelector<HTMLElement>("#tab-advanced")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(overlay.querySelector("#panel-advanced")!.hasAttribute("hidden")).toBe(false);
+    expect(overlay.querySelector("#panel-basic")!.hasAttribute("hidden")).toBe(true);
+    expect(overlay.querySelector("#tab-advanced")!.getAttribute("aria-selected")).toBe("true");
+    expect(overlay.querySelector("#btn-export")).not.toBeNull();
+    overlay.remove();
+  });
+
+  it("switches tabs with arrow keys", () => {
+    const overlay = openSettings();
+    overlay
+      .querySelector<HTMLElement>("#tab-basic")!
+      .dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    expect(overlay.querySelector("#panel-advanced")!.hasAttribute("hidden")).toBe(false);
+    overlay.remove();
+  });
+
+  it("preserves typed values when switching tabs", () => {
+    const overlay = openSettings();
+    const work = overlay.querySelector<HTMLInputElement>("#set-work")!;
+    work.value = "33";
+    overlay
+      .querySelector<HTMLElement>("#tab-advanced")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    overlay
+      .querySelector<HTMLElement>("#tab-basic")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(overlay.querySelector<HTMLInputElement>("#set-work")!.value).toBe("33");
+    overlay.remove();
+  });
+});
+
+describe("completed section (0075)", () => {
+  it("folds completed tasks into a collapsed section and expands on click", async () => {
+    const { state } = await import("./state");
+    addTask("Buy milk");
+    const taskId = state.tasks[0].id;
+    const btn = document.querySelector<HTMLElement>(`.check[data-id="${taskId}"]`)!;
+    btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await sleep(220);
+
+    const collapsed = document.querySelector("#app")!.innerHTML;
+    expect(collapsed).toContain("done-section");
+    expect(collapsed).toContain("Completed");
+    expect(collapsed).not.toContain('id="done-list"'); // collapsed → no list rendered
+
+    document
+      .querySelector<HTMLElement>('[data-action="toggle-done-section"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    const expanded = document.querySelector("#app")!.innerHTML;
+    expect(expanded).toContain("done-list");
+    expect(expanded).toContain("Buy milk");
+  });
+
+  it("reopening a completed task moves it back to the open list", async () => {
+    const { state } = await import("./state");
+    addTask("Pay rent");
+    const taskId = state.tasks[0].id;
+    document
+      .querySelector<HTMLElement>(`.check[data-id="${taskId}"]`)!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await sleep(220);
+    // Expand the section so the done row is in the DOM.
+    document
+      .querySelector<HTMLElement>('[data-action="toggle-done-section"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    document
+      .querySelector<HTMLElement>(`.check[data-id="${taskId}"]`)!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    const html = document.querySelector("#app")!.innerHTML;
+    expect(state.tasks[0].done).toBe(false);
+    expect(html).toContain("Pay rent");
+    expect(html).not.toContain("done-section");
   });
 });

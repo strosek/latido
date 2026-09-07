@@ -6,7 +6,10 @@ const FOCUSABLE =
 let dialogCounter = 0;
 
 function focusableIn(container: HTMLElement): HTMLElement[] {
-  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE));
+  // 0076: skip controls inside `hidden` panels so the trap only cycles visible ones.
+  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+    (el) => !el.closest("[hidden]"),
+  );
 }
 
 /**
