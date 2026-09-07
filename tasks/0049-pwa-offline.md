@@ -4,7 +4,7 @@ Status: done
 
 ## Goal
 
-Make Pomoflow installable and fully usable offline with a service worker, so it feels like a
+Make Latido installable and fully usable offline with a service worker, so it feels like a
 real app and keeps working without a connection.
 
 ## Requirements

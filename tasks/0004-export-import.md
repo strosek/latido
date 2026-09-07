@@ -10,7 +10,7 @@ ported easily between computers/browsers.
 ## Requirements
 
 - Export: serialize the full app state (tasks, sessions, notes, settings) to a JSON file and
-  trigger a download (e.g. `pomoflow-export-YYYY-MM-DD.json`).
+  trigger a download (e.g. `latido-export-YYYY-MM-DD.json`).
 - Import: pick a JSON file, validate its shape, then merge or replace current data.
   Decide and document the merge strategy (recommended: replace, after a confirmation prompt).
 - Include a schema `version` field in the export so future migrations are possible.
@@ -32,4 +32,4 @@ ported easily between computers/browsers.
 
 - Export produces a downloadable JSON containing tasks, sessions, notes, and settings.
 - Importing that file on another machine/browser restores the same tasks and sessions.
-- Importing a malformed or non-pomoflow file is rejected without changing current data.
+- Importing a malformed or non-latido file is rejected without changing current data.

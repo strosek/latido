@@ -1,5 +1,5 @@
-/* Pomoflow service worker — offline-first static caching (0050). */
-const CACHE = "pomoflow-v1";
+/* Latido service worker — offline-first static caching (0050). */
+const CACHE = "latido-v1";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

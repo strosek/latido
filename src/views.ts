@@ -50,12 +50,12 @@ const app = document.querySelector<HTMLDivElement>("#app")!;
 
 /** Subtle donation link shown in the footer. */
 function koFiHtml(): string {
-  return `<a class="ko-fi" href="https://ko-fi.com/edcorona" target="_blank" rel="noopener noreferrer" title="Support Pomoflow on Ko-fi">☕ Support on Ko-fi</a>`;
+  return `<a class="ko-fi" href="https://ko-fi.com/edcorona" target="_blank" rel="noopener noreferrer" title="Support Latido on Ko-fi">☕ Support on Ko-fi</a>`;
 }
 
 /** Keep the browser tab title useful during a session (countdown / elapsed). */
 export function updateDocumentTitle(clockText: string | null): void {
-  document.title = clockText ? `${clockText} · Pomoflow` : "Pomoflow";
+  document.title = clockText ? `${clockText} · Latido` : "Latido";
 }
 
 /* ------------------------------------------------------------------ */
@@ -119,9 +119,9 @@ function pageHeaderHtml(): string {
   return `
     <header class="app-header">
       <div class="app-title">
-        <button class="icon-btn about-btn" data-action="open-about" title="About Pomoflow" aria-label="About Pomoflow">${icon("info")}</button>
+        <button class="icon-btn about-btn" data-action="open-about" title="About Latido" aria-label="About Latido">${icon("info")}</button>
         <div>
-          <h1>Pomoflow</h1>
+          <h1>Latido</h1>
           <p class="tagline">Focus on one thing at a time.</p>
         </div>
       </div>

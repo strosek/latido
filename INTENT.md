@@ -1,4 +1,4 @@
-Pomoflow is a task tracker that allows me to manage my tasks, sort them into
+Latido is a task tracker that allows me to manage my tasks, sort them into
 urgent/important categories, add priorities, and that helps me track work
 sessions associated with them using the flowtime or the pomodoro techniques.
 This app should be simple, but informative, helpful when I feel overwhelmed by

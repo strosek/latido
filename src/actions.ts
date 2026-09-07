@@ -726,7 +726,7 @@ function openEditTask(id: string): void {
 /* Settings / data management                                          */
 /* ------------------------------------------------------------------ */
 
-const ISSUES_URL = "https://github.com/strosek/pomoflow-tasks/issues";
+const ISSUES_URL = "https://github.com/strosek/latido/issues";
 
 function toggleTheme(): void {
   settings.theme = settings.theme === "night" ? "day" : "night";
@@ -737,9 +737,9 @@ function toggleTheme(): void {
 
 function openAboutModal(): void {
   const overlay = openDialog(`
-    <h3>About Pomoflow</h3>
+    <h3>About Latido</h3>
     <div class="about">
-      <p><strong>One thing at a time.</strong> Pomoflow is a calm, free, browser-only task
+      <p><strong>One thing at a time.</strong> Latido is a calm, free, browser-only task
       tracker. No account, no server, no tracking — your data lives in your browser.</p>
       <h4>Philosophy</h4>
       <p>Built for people who like <strong>Flowtime</strong> (deep, open-ended focus) and
@@ -932,7 +932,7 @@ function openSettings(): void {
 
   exportBtn.addEventListener("click", () => {
     downloadTextFile(
-      `pomoflow-export-${new Date().toISOString().slice(0, 10)}.json`,
+      `latido-export-${new Date().toISOString().slice(0, 10)}.json`,
       JSON.stringify(buildExport(settings, state), null, 2),
       "application/json",
     );
@@ -940,7 +940,7 @@ function openSettings(): void {
 
   exportMdBtn.addEventListener("click", () => {
     downloadTextFile(
-      `pomoflow-history-${new Date().toISOString().slice(0, 10)}.md`,
+      `latido-history-${new Date().toISOString().slice(0, 10)}.md`,
       buildMarkdownHistory(),
       "text/markdown;charset=utf-8",
     );
@@ -1198,7 +1198,7 @@ function parseCsvTasks(rows: string[][]): { tasks: CsvTaskStub[]; skipped: numbe
 
     let quadrant: Quadrant;
     if (isTodoist) {
-      // Todoist priority: 1 (highest) .. 4 (lowest); Pomoflow quadrant defaults to q2.
+      // Todoist priority: 1 (highest) .. 4 (lowest); Latido quadrant defaults to q2.
       quadrant = "q2";
     } else {
       quadrant = quadrantIdx >= 0 ? parseQuadrant(row[quadrantIdx] ?? "") : "q2";
@@ -1294,7 +1294,7 @@ function clearAllData(): void {
 }
 
 function buildMarkdownHistory(): string {
-  const lines: string[] = ["# Pomoflow history", ""];
+  const lines: string[] = ["# Latido history", ""];
   const sessions = doneSessions(state);
   if (!sessions.length) {
     lines.push("No finished sessions yet.");

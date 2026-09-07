@@ -4,7 +4,7 @@ Status: done
 
 ## Goal
 
-Let new users bring tasks from Todoist or any CSV export so switching to Pomoflow isn't manual
+Let new users bring tasks from Todoist or any CSV export so switching to Latido isn't manual
 work.
 
 ## Requirements

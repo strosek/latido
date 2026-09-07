@@ -204,19 +204,31 @@ describe("parseImport", () => {
     expect(parseImport("not json").ok).toBe(false);
   });
 
-  it("rejects non-Pomoflow or wrong-version files", () => {
+  it("rejects non-Latido or wrong-version files", () => {
     expect(parseImport(JSON.stringify({ app: "other", version: 1 })).ok).toBe(false);
-    expect(parseImport(JSON.stringify({ app: "pomoflow", version: 99 })).ok).toBe(false);
+    expect(parseImport(JSON.stringify({ app: "latido", version: 99 })).ok).toBe(false);
+  });
+
+  it("still accepts legacy pomoflow exports", () => {
+    const result = parseImport(
+      JSON.stringify({
+        app: "pomoflow",
+        version: 1,
+        data: { tasks: [], sessions: [], notes: [] },
+        settings: { ...DEFAULT_SETTINGS },
+      }),
+    );
+    expect(result.ok).toBe(true);
   });
 
   it("rejects exports missing data arrays", () => {
-    expect(parseImport(JSON.stringify({ app: "pomoflow", version: 1, data: {} })).ok).toBe(false);
+    expect(parseImport(JSON.stringify({ app: "latido", version: 1, data: {} })).ok).toBe(false);
   });
 
   it("parses a valid export and sanitizes it", () => {
     const result = parseImport(
       JSON.stringify({
-        app: "pomoflow",
+        app: "latido",
         version: 1,
         data: { tasks: [], sessions: [], notes: [] },
         settings: { ...DEFAULT_SETTINGS, pomodoroWorkMin: 5000 },
@@ -262,8 +274,26 @@ describe("persistence", () => {
   });
 
   it("falls back to defaults on corrupt storage", () => {
-    store.set("pomoflow:v1", "{oops");
+    store.set("latido:v1", "{oops");
     expect(loadState()).toEqual(emptyState());
+  });
+
+  it("migrates legacy pomoflow data on first load", () => {
+    store.set(
+      "pomoflow:v1",
+      JSON.stringify({
+        tasks: [{ id: "t1", title: "Old task" }],
+        sessions: [],
+        notes: [],
+        activeSessionId: null,
+      }),
+    );
+    store.set("pomoflow:settings:v1", JSON.stringify({ ...DEFAULT_SETTINGS }));
+    const state = loadState();
+    expect(state.tasks[0].title).toBe("Old task");
+    expect(store.get("latido:v1")).toBeTruthy();
+    expect(store.get("pomoflow:v1")).toBeUndefined();
+    expect(loadSettings()).toEqual(DEFAULT_SETTINGS);
   });
 
   it("backs up and restores data", () => {

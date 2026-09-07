@@ -1,15 +1,15 @@
-# Pomoflow
+# Latido
 
 _One thing at a time._
 
-Pomoflow is a calm, free, browser-only task tracker for people who juggle too much. It pairs a
+Latido is a calm, free, browser-only task tracker for people who juggle too much. It pairs a
 simple urgent/important task board with the two focus techniques that actually help — **Flowtime**
 for deep, open-ended work and **Pomodoro** for steady progress — and it never asks for an account,
 a subscription, or a server to think about.
 
 Your data lives in your browser. Open it, add a task, start focusing.
 
-## Why Pomoflow?
+## Why Latido?
 
 Built for the people who like Flowtime and don't want to pay for an app this simple — or lose their
 peace of mind to feature creep. It is designed to be:

@@ -1,6 +1,6 @@
 {
-  "name": "Pomoflow",
-  "short_name": "Pomoflow",
+  "name": "Latido",
+  "short_name": "Latido",
   "description": "Simple, calm task tracking with pomodoro and flowtime focus sessions.",
   "start_url": "./",
   "display": "standalone",

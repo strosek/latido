@@ -128,7 +128,7 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 export interface ExportPayload {
-  app: "pomoflow";
+  app: "latido";
   version: 1;
   exportedAt: number;
   settings: Settings;

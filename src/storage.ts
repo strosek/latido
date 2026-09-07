@@ -4,10 +4,46 @@ import type { AppState, ExportPayload, RestartNote, Session, Settings, Task } fr
 const PRESETS = ["chime", "soft", "breeze"] as const;
 const DAY_MS = 86_400_000;
 
-export const STATE_KEY = "pomoflow:v1";
-export const SETTINGS_KEY = "pomoflow:settings:v1";
-export const BACKUP_KEY = "pomoflow:backup:v1";
-export const EXPORT_APP = "pomoflow";
+export const STATE_KEY = "latido:v1";
+export const SETTINGS_KEY = "latido:settings:v1";
+export const BACKUP_KEY = "latido:backup:v1";
+export const EXPORT_APP = "latido";
+
+// Legacy "Pomoflow" identifiers, kept so pre-rename data migrates cleanly.
+const LEGACY_STATE_KEY = "pomoflow:v1";
+const LEGACY_SETTINGS_KEY = "pomoflow:settings:v1";
+const LEGACY_BACKUP_KEY = "pomoflow:backup:v1";
+const LEGACY_SNAPSHOT_PREFIX = "pomoflow:snapshot:";
+
+/** One-time migration of data saved under the old "pomoflow" keys. */
+function migrateLegacy(): void {
+  try {
+    if (!localStorage.getItem(STATE_KEY) && localStorage.getItem(LEGACY_STATE_KEY)) {
+      localStorage.setItem(STATE_KEY, localStorage.getItem(LEGACY_STATE_KEY)!);
+      localStorage.removeItem(LEGACY_STATE_KEY);
+    }
+    if (!localStorage.getItem(SETTINGS_KEY) && localStorage.getItem(LEGACY_SETTINGS_KEY)) {
+      localStorage.setItem(SETTINGS_KEY, localStorage.getItem(LEGACY_SETTINGS_KEY)!);
+      localStorage.removeItem(LEGACY_SETTINGS_KEY);
+    }
+    if (!localStorage.getItem(BACKUP_KEY) && localStorage.getItem(LEGACY_BACKUP_KEY)) {
+      localStorage.setItem(BACKUP_KEY, localStorage.getItem(LEGACY_BACKUP_KEY)!);
+      localStorage.removeItem(LEGACY_BACKUP_KEY);
+    }
+    const keysToMigrate: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(LEGACY_SNAPSHOT_PREFIX)) keysToMigrate.push(key);
+    }
+    for (const key of keysToMigrate) {
+      const newKey = SNAPSHOT_PREFIX + key.slice(LEGACY_SNAPSHOT_PREFIX.length);
+      if (!localStorage.getItem(newKey)) localStorage.setItem(newKey, localStorage.getItem(key)!);
+      localStorage.removeItem(key);
+    }
+  } catch (err) {
+    console.error("Failed to migrate legacy data.", err);
+  }
+}
 export const EXPORT_VERSION = 1;
 
 export function emptyState(): AppState {
@@ -21,6 +57,7 @@ export function emptyState(): AppState {
 
 export function loadState(): AppState {
   try {
+    migrateLegacy();
     const raw = localStorage.getItem(STATE_KEY);
     if (!raw) return emptyState();
     return sanitizeState(JSON.parse(raw));
@@ -92,6 +129,7 @@ export function sanitizeSettings(raw: unknown): Settings {
 
 export function loadSettings(): Settings {
   try {
+    migrateLegacy();
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return { ...DEFAULT_SETTINGS };
     return sanitizeSettings(JSON.parse(raw));
@@ -244,11 +282,11 @@ export function parseImport(text: string): ImportResult {
   }
 
   if (typeof obj !== "object" || obj === null) {
-    return { ok: false, error: "This file is not a Pomoflow export." };
+    return { ok: false, error: "This file is not a Latido export." };
   }
   const rec = obj as Record<string, unknown>;
-  if (rec.app !== EXPORT_APP) {
-    return { ok: false, error: "This file is not a Pomoflow export." };
+  if (rec.app !== EXPORT_APP && rec.app !== "pomoflow") {
+    return { ok: false, error: "This file is not a Latido export." };
   }
   if (rec.version !== EXPORT_VERSION) {
     return { ok: false, error: `Unsupported export version (${String(rec.version)}).` };
@@ -317,7 +355,7 @@ export function loadBackup(): BackupData | null {
 /* Daily snapshot backups (0053)                                       */
 /* ------------------------------------------------------------------ */
 
-export const SNAPSHOT_PREFIX = "pomoflow:snapshot:";
+export const SNAPSHOT_PREFIX = "latido:snapshot:";
 const SNAPSHOT_MAX = 3;
 
 function snapshotKey(day: string): string {

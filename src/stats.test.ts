@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { startOfLocalDay, startOfWeek } from "./dates";
 import {
   dailyFocus,
   doneSessions,
@@ -127,10 +128,13 @@ describe("todayTotals / weekTotals", () => {
   });
 
   it("ignores yesterday for today totals but includes it in the week", () => {
+    const today = atLocalMidnight(0);
     const yesterday = atLocalMidnight(1);
     const sessions = [flowSession({ startedAt: yesterday, endedAt: yesterday + 30 * MIN })];
     expect(todayTotals(sessions, SETTINGS).workMs).toBe(0);
-    expect(weekTotals(sessions, SETTINGS).workMs).toBe(30 * MIN);
+    // Yesterday is inside the current Monday-start week except on Mondays.
+    const yesterdayInWeek = startOfLocalDay(yesterday) >= startOfWeek(today);
+    expect(weekTotals(sessions, SETTINGS).workMs).toBe(yesterdayInWeek ? 30 * MIN : 0);
   });
 });
 

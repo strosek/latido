@@ -1,7 +1,7 @@
 {
-  "app": "pomoflow",
+  "app": "latido",
   "version": 1,
-  "exportedAt": 1788555326697,
+  "exportedAt": 1788793455545,
   "settings": {
     "pomodoroWorkMin": 25,
     "pomodoroShortBreakMin": 5,
@@ -24,11 +24,14 @@
         "priority": 1,
         "quadrant": "q2",
         "done": false,
-        "createdAt": 1784613600000,
+        "createdAt": 1784872800000,
         "doneAt": null,
         "estimatedMin": 180,
         "quick": false,
-        "tags": ["writing", "book"],
+        "tags": [
+          "writing",
+          "book"
+        ],
         "description": "",
         "plannedFor": null
       },
@@ -38,13 +41,16 @@
         "priority": 1,
         "quadrant": "q1",
         "done": false,
-        "createdAt": 1780898400000,
+        "createdAt": 1782108000000,
         "doneAt": null,
         "estimatedMin": 240,
         "quick": false,
-        "tags": ["code", "work"],
+        "tags": [
+          "code",
+          "work"
+        ],
         "description": "",
-        "plannedFor": 1788501600000
+        "plannedFor": 1788760800000
       },
       {
         "id": "f3",
@@ -52,11 +58,14 @@
         "priority": 2,
         "quadrant": "q2",
         "done": false,
-        "createdAt": 1782453600000,
+        "createdAt": 1781244000000,
         "doneAt": null,
         "estimatedMin": 45,
         "quick": false,
-        "tags": ["study", "language"],
+        "tags": [
+          "study",
+          "language"
+        ],
         "description": "",
         "plannedFor": null
       },
@@ -66,13 +75,15 @@
         "priority": 2,
         "quadrant": "q2",
         "done": false,
-        "createdAt": 1782280800000,
+        "createdAt": 1781676000000,
         "doneAt": null,
         "estimatedMin": 90,
         "quick": false,
-        "tags": ["podcast"],
+        "tags": [
+          "podcast"
+        ],
         "description": "",
-        "plannedFor": 1788501600000
+        "plannedFor": 1788760800000
       },
       {
         "id": "f5",
@@ -80,13 +91,15 @@
         "priority": 4,
         "quadrant": "q4",
         "done": false,
-        "createdAt": 1781330400000,
+        "createdAt": 1782540000000,
         "doneAt": null,
         "estimatedMin": null,
         "quick": false,
-        "tags": ["home"],
+        "tags": [
+          "home"
+        ],
         "description": "",
-        "plannedFor": 1789106400000
+        "plannedFor": 1789365600000
       },
       {
         "id": "f6",
@@ -95,10 +108,13 @@
         "quadrant": "q3",
         "done": true,
         "createdAt": 1781848800000,
-        "doneAt": 1788372000000,
+        "doneAt": 1788631200000,
         "estimatedMin": 60,
         "quick": false,
-        "tags": ["work", "writing"],
+        "tags": [
+          "work",
+          "writing"
+        ],
         "description": "",
         "plannedFor": null
       },
@@ -108,13 +124,15 @@
         "priority": 1,
         "quadrant": "q1",
         "done": false,
-        "createdAt": 1780984800000,
+        "createdAt": 1781848800000,
         "doneAt": null,
         "estimatedMin": 150,
         "quick": false,
-        "tags": ["podcast"],
+        "tags": [
+          "podcast"
+        ],
         "description": "",
-        "plannedFor": 1788588000000
+        "plannedFor": 1788847200000
       },
       {
         "id": "f8",
@@ -122,11 +140,13 @@
         "priority": 5,
         "quadrant": "q4",
         "done": true,
-        "createdAt": 1781848800000,
-        "doneAt": 1788458400000,
+        "createdAt": 1782453600000,
+        "doneAt": 1788717600000,
         "estimatedMin": null,
         "quick": true,
-        "tags": ["health"],
+        "tags": [
+          "health"
+        ],
         "description": "",
         "plannedFor": null
       }
@@ -137,11 +157,11 @@
         "taskId": "f7",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1784741400000,
+        "startedAt": 1785000600000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1784748120000,
+        "endedAt": 1785007320000,
         "status": "done"
       },
       {
@@ -149,11 +169,11 @@
         "taskId": "f1",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1784745000000,
+        "startedAt": 1785004200000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1784750820000,
+        "endedAt": 1785010020000,
         "status": "done"
       },
       {
@@ -161,11 +181,11 @@
         "taskId": "f4",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1784921400000,
+        "startedAt": 1785180600000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1784927760000,
+        "endedAt": 1785186960000,
         "status": "done"
       },
       {
@@ -173,35 +193,35 @@
         "taskId": "f1",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1784923200000,
+        "startedAt": 1785182400000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1784932140000,
+        "endedAt": 1785191340000,
         "status": "done"
       },
       {
         "id": "s6",
-        "taskId": "f7",
+        "taskId": "f6",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1785078000000,
+        "startedAt": 1785258000000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1785085260000,
+        "endedAt": 1785262680000,
         "status": "done"
       },
       {
         "id": "s5",
-        "taskId": "f4",
+        "taskId": "f5",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1785079800000,
+        "startedAt": 1785279600000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1785086220000,
+        "endedAt": 1785284820000,
         "status": "done"
       },
       {
@@ -209,71 +229,35 @@
         "taskId": "f3",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1785088800000,
+        "startedAt": 1785364200000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1785097260000,
+        "endedAt": 1785369300000,
         "status": "done"
       },
       {
         "id": "s8",
-        "taskId": "f8",
+        "taskId": "f6",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1785169800000,
+        "startedAt": 1785625200000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1785175620000,
+        "endedAt": 1785628800000,
         "status": "done"
       },
       {
         "id": "s9",
-        "taskId": "f4",
+        "taskId": "f5",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1785279600000,
+        "startedAt": 1785695400000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1785288480000,
-        "status": "done"
-      },
-      {
-        "id": "s10",
-        "taskId": "f2",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1785342600000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1785350520000,
-        "status": "done"
-      },
-      {
-        "id": "s12",
-        "taskId": "f8",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1785439800000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1785443400000,
-        "status": "done"
-      },
-      {
-        "id": "s13",
-        "taskId": "f6",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1785441600000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1785449700000,
+        "endedAt": 1785701340000,
         "status": "done"
       },
       {
@@ -281,23 +265,59 @@
         "taskId": "f5",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1785447000000,
+        "startedAt": 1785706200000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1785453540000,
+        "endedAt": 1785712740000,
+        "status": "done"
+      },
+      {
+        "id": "s10",
+        "taskId": "f8",
+        "technique": "flowtime",
+        "plannedMs": 0,
+        "startedAt": 1785720600000,
+        "pausedAt": null,
+        "accumulatedPauseMs": 0,
+        "completedPomodoros": 0,
+        "endedAt": 1785725040000,
+        "status": "done"
+      },
+      {
+        "id": "s12",
+        "taskId": "f7",
+        "technique": "flowtime",
+        "plannedMs": 0,
+        "startedAt": 1785774600000,
+        "pausedAt": null,
+        "accumulatedPauseMs": 0,
+        "completedPomodoros": 0,
+        "endedAt": 1785779640000,
+        "status": "done"
+      },
+      {
+        "id": "s13",
+        "taskId": "f4",
+        "technique": "flowtime",
+        "plannedMs": 0,
+        "startedAt": 1785862800000,
+        "pausedAt": null,
+        "accumulatedPauseMs": 0,
+        "completedPomodoros": 0,
+        "endedAt": 1785871320000,
         "status": "done"
       },
       {
         "id": "s14",
-        "taskId": "f6",
+        "taskId": "f2",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1785529800000,
+        "startedAt": 1785866400000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1785534840000,
+        "endedAt": 1785871020000,
         "status": "done"
       },
       {
@@ -305,35 +325,35 @@
         "taskId": "f4",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1785690000000,
+        "startedAt": 1785951000000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1785697920000,
-        "status": "done"
-      },
-      {
-        "id": "s17",
-        "taskId": "f7",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1785771000000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1785776460000,
+        "endedAt": 1785957240000,
         "status": "done"
       },
       {
         "id": "s16",
-        "taskId": "f4",
+        "taskId": "f8",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1785801600000,
+        "startedAt": 1786028400000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1785805260000,
+        "endedAt": 1786034280000,
+        "status": "done"
+      },
+      {
+        "id": "s17",
+        "taskId": "f6",
+        "technique": "flowtime",
+        "plannedMs": 0,
+        "startedAt": 1786044600000,
+        "pausedAt": null,
+        "accumulatedPauseMs": 0,
+        "completedPomodoros": 0,
+        "endedAt": 1786049520000,
         "status": "done"
       },
       {
@@ -341,35 +361,23 @@
         "taskId": "f7",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1785871800000,
+        "startedAt": 1786044600000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1785880500000,
+        "endedAt": 1786053300000,
         "status": "done"
       },
       {
         "id": "s19",
-        "taskId": "f2",
+        "taskId": "f4",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1785884400000,
+        "startedAt": 1786132800000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1785890700000,
-        "status": "done"
-      },
-      {
-        "id": "s21",
-        "taskId": "f7",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1785951000000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1785956040000,
+        "endedAt": 1786137600000,
         "status": "done"
       },
       {
@@ -377,47 +385,59 @@
         "taskId": "f3",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1785969000000,
+        "startedAt": 1786141800000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1785977100000,
+        "endedAt": 1786149900000,
+        "status": "done"
+      },
+      {
+        "id": "s21",
+        "taskId": "f8",
+        "technique": "flowtime",
+        "plannedMs": 0,
+        "startedAt": 1786379400000,
+        "pausedAt": null,
+        "accumulatedPauseMs": 0,
+        "completedPomodoros": 0,
+        "endedAt": 1786383360000,
         "status": "done"
       },
       {
         "id": "s22",
-        "taskId": "f7",
+        "taskId": "f3",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1786125600000,
+        "startedAt": 1786404600000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1786133280000,
+        "endedAt": 1786412520000,
         "status": "done"
       },
       {
         "id": "s23",
-        "taskId": "f5",
+        "taskId": "f4",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1786125600000,
+        "startedAt": 1786483800000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1786131600000,
+        "endedAt": 1786491120000,
         "status": "done"
       },
       {
         "id": "s24",
-        "taskId": "f2",
+        "taskId": "f8",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1786221000000,
+        "startedAt": 1786566600000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1786226340000,
+        "endedAt": 1786570680000,
         "status": "done"
       },
       {
@@ -425,83 +445,71 @@
         "taskId": "f2",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1786384800000,
+        "startedAt": 1786978800000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1786388520000,
+        "endedAt": 1786985040000,
         "status": "done"
       },
       {
         "id": "s26",
-        "taskId": "f3",
+        "taskId": "f5",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1786462200000,
+        "startedAt": 1786987800000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1786466760000,
+        "endedAt": 1786993740000,
         "status": "done"
       },
       {
         "id": "s27",
-        "taskId": "f8",
+        "taskId": "f3",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1786564800000,
+        "startedAt": 1787081400000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1786569840000,
+        "endedAt": 1787088720000,
         "status": "done"
       },
       {
         "id": "s28",
-        "taskId": "f5",
+        "taskId": "f2",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1786642200000,
+        "startedAt": 1787162400000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1786648380000,
+        "endedAt": 1787166360000,
         "status": "done"
       },
       {
         "id": "s29",
-        "taskId": "f3",
+        "taskId": "f4",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1786651200000,
+        "startedAt": 1787241600000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1786655820000,
+        "endedAt": 1787249340000,
         "status": "done"
       },
       {
         "id": "s30",
-        "taskId": "f4",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1786723200000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1786730940000,
-        "status": "done"
-      },
-      {
-        "id": "s31",
         "taskId": "f6",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1786899600000,
+        "startedAt": 1787335200000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1786906920000,
+        "endedAt": 1787341800000,
         "status": "done"
       },
       {
@@ -509,23 +517,47 @@
         "taskId": "f5",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1787005800000,
+        "startedAt": 1787349600000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1787012400000,
+        "endedAt": 1787355360000,
+        "status": "done"
+      },
+      {
+        "id": "s31",
+        "taskId": "f7",
+        "technique": "flowtime",
+        "plannedMs": 0,
+        "startedAt": 1787355000000,
+        "pausedAt": null,
+        "accumulatedPauseMs": 0,
+        "completedPomodoros": 0,
+        "endedAt": 1787358900000,
         "status": "done"
       },
       {
         "id": "s33",
-        "taskId": "f7",
+        "taskId": "f8",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1787076000000,
+        "startedAt": 1787589000000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1787080500000,
+        "endedAt": 1787594880000,
+        "status": "done"
+      },
+      {
+        "id": "s35",
+        "taskId": "f7",
+        "technique": "flowtime",
+        "plannedMs": 0,
+        "startedAt": 1787691600000,
+        "pausedAt": null,
+        "accumulatedPauseMs": 0,
+        "completedPomodoros": 0,
+        "endedAt": 1787697480000,
         "status": "done"
       },
       {
@@ -533,287 +565,203 @@
         "taskId": "f5",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1787189400000,
+        "startedAt": 1787702400000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1787193900000,
-        "status": "done"
-      },
-      {
-        "id": "s35",
-        "taskId": "f1",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1787342400000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1787349360000,
+        "endedAt": 1787710980000,
         "status": "done"
       },
       {
         "id": "s36",
-        "taskId": "f8",
+        "taskId": "f4",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1787358600000,
+        "startedAt": 1787794200000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1787363760000,
+        "endedAt": 1787800920000,
         "status": "done"
       },
       {
         "id": "s37",
-        "taskId": "f3",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1787418000000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1787424540000,
-        "status": "done"
-      },
-      {
-        "id": "s38",
-        "taskId": "f6",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1787508000000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1787512380000,
-        "status": "done"
-      },
-      {
-        "id": "s39",
-        "taskId": "f6",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1787603400000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1787608860000,
-        "status": "done"
-      },
-      {
-        "id": "s42",
-        "taskId": "f2",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1787688000000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1787696160000,
-        "status": "done"
-      },
-      {
-        "id": "s41",
-        "taskId": "f3",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1787691600000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1787695500000,
-        "status": "done"
-      },
-      {
-        "id": "s40",
-        "taskId": "f7",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1787707800000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1787714460000,
-        "status": "done"
-      },
-      {
-        "id": "s43",
-        "taskId": "f5",
+        "taskId": "f1",
         "technique": "flowtime",
         "plannedMs": 0,
         "startedAt": 1787851800000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1787855580000,
+        "endedAt": 1787860320000,
         "status": "done"
       },
       {
-        "id": "s45",
+        "id": "s39",
         "taskId": "f8",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1787940000000,
+        "startedAt": 1788042600000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1787944740000,
+        "endedAt": 1788048240000,
         "status": "done"
       },
       {
-        "id": "s44",
-        "taskId": "f7",
+        "id": "s38",
+        "taskId": "f5",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1787956200000,
+        "startedAt": 1788048000000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1787963400000,
+        "endedAt": 1788052200000,
         "status": "done"
       },
       {
-        "id": "s46",
-        "taskId": "f6",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1787963400000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1787970060000,
-        "status": "done"
-      },
-      {
-        "id": "s47",
-        "taskId": "f7",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1788046200000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1788052440000,
-        "status": "done"
-      },
-      {
-        "id": "s48",
-        "taskId": "f8",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1788109200000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1788113520000,
-        "status": "done"
-      },
-      {
-        "id": "s50",
+        "id": "s41",
         "taskId": "f1",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1788127200000,
+        "startedAt": 1788114600000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1788134160000,
+        "endedAt": 1788120900000,
         "status": "done"
       },
       {
-        "id": "s49",
+        "id": "s40",
         "taskId": "f6",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1788129000000,
+        "startedAt": 1788136200000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1788133440000,
+        "endedAt": 1788141180000,
         "status": "done"
       },
       {
-        "id": "s52",
-        "taskId": "f2",
+        "id": "s42",
+        "taskId": "f4",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1788199200000,
+        "startedAt": 1788188400000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1788204540000,
+        "endedAt": 1788195660000,
         "status": "done"
       },
       {
         "id": "s51",
-        "taskId": "f2",
+        "taskId": "f6",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1788213600000,
+        "startedAt": 1788303600000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1788222120000,
+        "endedAt": 1788309000000,
         "status": "done"
       },
       {
-        "id": "s53",
-        "taskId": "f4",
-        "technique": "flowtime",
-        "plannedMs": 0,
-        "startedAt": 1788276600000,
-        "pausedAt": null,
-        "accumulatedPauseMs": 0,
-        "completedPomodoros": 0,
-        "endedAt": 1788281520000,
-        "status": "done"
-      },
-      {
-        "id": "s55",
+        "id": "s43",
         "taskId": "f7",
+        "technique": "flowtime",
+        "plannedMs": 0,
+        "startedAt": 1788388200000,
+        "pausedAt": null,
+        "accumulatedPauseMs": 0,
+        "completedPomodoros": 0,
+        "endedAt": 1788395040000,
+        "status": "done"
+      },
+      {
+        "id": "s44",
+        "taskId": "f2",
         "technique": "flowtime",
         "plannedMs": 0,
         "startedAt": 1788393600000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1788400620000,
+        "endedAt": 1788400980000,
         "status": "done"
       },
       {
-        "id": "s54",
-        "taskId": "f2",
+        "id": "s45",
+        "taskId": "f5",
         "technique": "flowtime",
         "plannedMs": 0,
         "startedAt": 1788395400000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1788400440000,
+        "endedAt": 1788403080000,
         "status": "done"
       },
       {
-        "id": "s56",
+        "id": "s46",
+        "taskId": "f7",
+        "technique": "flowtime",
+        "plannedMs": 0,
+        "startedAt": 1788478200000,
+        "pausedAt": null,
+        "accumulatedPauseMs": 0,
+        "completedPomodoros": 0,
+        "endedAt": 1788484440000,
+        "status": "done"
+      },
+      {
+        "id": "s47",
+        "taskId": "f8",
+        "technique": "flowtime",
+        "plannedMs": 0,
+        "startedAt": 1788534000000,
+        "pausedAt": null,
+        "accumulatedPauseMs": 0,
+        "completedPomodoros": 0,
+        "endedAt": 1788542460000,
+        "status": "done"
+      },
+      {
+        "id": "s48",
         "taskId": "f6",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1788471000000,
+        "startedAt": 1788645600000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1788475500000,
+        "endedAt": 1788649920000,
         "status": "done"
       },
       {
-        "id": "s57",
-        "taskId": "f5",
+        "id": "s49",
+        "taskId": "f7",
         "technique": "flowtime",
         "plannedMs": 0,
-        "startedAt": 1788559200000,
+        "startedAt": 1788710400000,
         "pausedAt": null,
         "accumulatedPauseMs": 0,
         "completedPomodoros": 0,
-        "endedAt": 1788564600000,
+        "endedAt": 1788718980000,
+        "status": "done"
+      },
+      {
+        "id": "s50",
+        "taskId": "f3",
+        "technique": "flowtime",
+        "plannedMs": 0,
+        "startedAt": 1788823800000,
+        "pausedAt": null,
+        "accumulatedPauseMs": 0,
+        "completedPomodoros": 0,
+        "endedAt": 1788827400000,
         "status": "done"
       }
     ],
@@ -822,223 +770,247 @@
         "id": "n1",
         "sessionId": "s1",
         "text": "Flow was great; stopped while still interested.",
-        "createdAt": 1784748120000
+        "createdAt": 1785007320000
       },
       {
         "id": "n2",
         "sessionId": "s2",
         "text": "Deep focus session; solved the tricky refactor step.",
-        "createdAt": 1784750820000
+        "createdAt": 1785010020000
       },
       {
         "id": "n3",
         "sessionId": "s4",
         "text": "Got through 3 pages of vocabulary, next session reviews.",
-        "createdAt": 1784932140000
+        "createdAt": 1785191340000
       },
       {
         "id": "n4",
         "sessionId": "s5",
-        "text": "Deep focus session; solved the tricky refactor step.",
-        "createdAt": 1785086220000
+        "text": "Trimmed the podcast intro; outro still needs work.",
+        "createdAt": 1785284820000
       },
       {
         "id": "n5",
         "sessionId": "s7",
-        "text": "Trimmed the podcast intro; outro still needs work.",
-        "createdAt": 1785097260000
+        "text": "Deep focus session; solved the tricky refactor step.",
+        "createdAt": 1785369300000
       },
       {
         "id": "n6",
         "sessionId": "s8",
-        "text": "Good momentum — finished the first half of the chapter.",
-        "createdAt": 1785175620000
+        "text": "Outline for the newsletter is done.",
+        "createdAt": 1785628800000
       },
       {
         "id": "n7",
         "sessionId": "s9",
-        "text": "Got through 3 pages of vocabulary, next session reviews.",
-        "createdAt": 1785288480000
+        "text": "Good momentum — finished the first half of the chapter.",
+        "createdAt": 1785701340000
       },
       {
         "id": "n8",
-        "sessionId": "s11",
+        "sessionId": "s10",
         "text": "Flow was great; stopped while still interested.",
-        "createdAt": 1785453540000
+        "createdAt": 1785725040000
       },
       {
         "id": "n9",
-        "sessionId": "s12",
+        "sessionId": "s11",
         "text": "Flow was great; stopped while still interested.",
-        "createdAt": 1785443400000
+        "createdAt": 1785712740000
       },
       {
         "id": "n10",
-        "sessionId": "s13",
-        "text": "Deep focus session; solved the tricky refactor step.",
-        "createdAt": 1785449700000
+        "sessionId": "s12",
+        "text": "Trimmed the podcast intro; outro still needs work.",
+        "createdAt": 1785779640000
       },
       {
         "id": "n11",
-        "sessionId": "s14",
-        "text": "Deep focus session; solved the tricky refactor step.",
-        "createdAt": 1785534840000
+        "sessionId": "s13",
+        "text": "Got through 3 pages of vocabulary, next session reviews.",
+        "createdAt": 1785871320000
       },
       {
         "id": "n12",
-        "sessionId": "s15",
+        "sessionId": "s14",
         "text": "Trimmed the podcast intro; outro still needs work.",
-        "createdAt": 1785697920000
+        "createdAt": 1785871020000
       },
       {
         "id": "n13",
-        "sessionId": "s17",
-        "text": "Trimmed the podcast intro; outro still needs work.",
-        "createdAt": 1785776460000
+        "sessionId": "s15",
+        "text": "Deep focus session; solved the tricky refactor step.",
+        "createdAt": 1785957240000
       },
       {
         "id": "n14",
-        "sessionId": "s19",
+        "sessionId": "s16",
         "text": "Got through 3 pages of vocabulary, next session reviews.",
-        "createdAt": 1785890700000
+        "createdAt": 1786034280000
       },
       {
         "id": "n15",
-        "sessionId": "s20",
-        "text": "Good momentum — finished the first half of the chapter.",
-        "createdAt": 1785977100000
+        "sessionId": "s17",
+        "text": "Outline for the newsletter is done.",
+        "createdAt": 1786049520000
       },
       {
         "id": "n16",
-        "sessionId": "s21",
-        "text": "Flow was great; stopped while still interested.",
-        "createdAt": 1785956040000
+        "sessionId": "s19",
+        "text": "Outline for the newsletter is done.",
+        "createdAt": 1786137600000
       },
       {
         "id": "n17",
-        "sessionId": "s22",
-        "text": "Got through 3 pages of vocabulary, next session reviews.",
-        "createdAt": 1786133280000
+        "sessionId": "s20",
+        "text": "Good momentum — finished the first half of the chapter.",
+        "createdAt": 1786149900000
       },
       {
         "id": "n18",
-        "sessionId": "s24",
-        "text": "Outline for the newsletter is done.",
-        "createdAt": 1786226340000
+        "sessionId": "s21",
+        "text": "Deep focus session; solved the tricky refactor step.",
+        "createdAt": 1786383360000
       },
       {
         "id": "n19",
-        "sessionId": "s25",
-        "text": "Outline for the newsletter is done.",
-        "createdAt": 1786388520000
+        "sessionId": "s22",
+        "text": "Deep focus session; solved the tricky refactor step.",
+        "createdAt": 1786412520000
       },
       {
         "id": "n20",
-        "sessionId": "s26",
-        "text": "Deep focus session; solved the tricky refactor step.",
-        "createdAt": 1786466760000
+        "sessionId": "s23",
+        "text": "Got through 3 pages of vocabulary, next session reviews.",
+        "createdAt": 1786491120000
       },
       {
         "id": "n21",
-        "sessionId": "s27",
-        "text": "Got through 3 pages of vocabulary, next session reviews.",
-        "createdAt": 1786569840000
+        "sessionId": "s24",
+        "text": "Deep focus session; solved the tricky refactor step.",
+        "createdAt": 1786570680000
       },
       {
         "id": "n22",
-        "sessionId": "s28",
+        "sessionId": "s25",
         "text": "Deep focus session; solved the tricky refactor step.",
-        "createdAt": 1786648380000
+        "createdAt": 1786985040000
       },
       {
         "id": "n23",
-        "sessionId": "s30",
-        "text": "Flow was great; stopped while still interested.",
-        "createdAt": 1786730940000
+        "sessionId": "s26",
+        "text": "Deep focus session; solved the tricky refactor step.",
+        "createdAt": 1786993740000
       },
       {
         "id": "n24",
-        "sessionId": "s31",
-        "text": "Flow was great; stopped while still interested.",
-        "createdAt": 1786906920000
+        "sessionId": "s27",
+        "text": "Got through 3 pages of vocabulary, next session reviews.",
+        "createdAt": 1787088720000
       },
       {
         "id": "n25",
-        "sessionId": "s32",
-        "text": "Got through 3 pages of vocabulary, next session reviews.",
-        "createdAt": 1787012400000
+        "sessionId": "s28",
+        "text": "Flow was great; stopped while still interested.",
+        "createdAt": 1787166360000
       },
       {
         "id": "n26",
-        "sessionId": "s33",
-        "text": "Good momentum — finished the first half of the chapter.",
-        "createdAt": 1787080500000
+        "sessionId": "s29",
+        "text": "Flow was great; stopped while still interested.",
+        "createdAt": 1787249340000
       },
       {
         "id": "n27",
-        "sessionId": "s35",
-        "text": "Outline for the newsletter is done.",
-        "createdAt": 1787349360000
+        "sessionId": "s30",
+        "text": "Trimmed the podcast intro; outro still needs work.",
+        "createdAt": 1787341800000
       },
       {
         "id": "n28",
-        "sessionId": "s37",
-        "text": "Got through 3 pages of vocabulary, next session reviews.",
-        "createdAt": 1787424540000
+        "sessionId": "s31",
+        "text": "Trimmed the podcast intro; outro still needs work.",
+        "createdAt": 1787358900000
       },
       {
         "id": "n29",
-        "sessionId": "s38",
-        "text": "Flow was great; stopped while still interested.",
-        "createdAt": 1787512380000
+        "sessionId": "s32",
+        "text": "Deep focus session; solved the tricky refactor step.",
+        "createdAt": 1787355360000
       },
       {
         "id": "n30",
-        "sessionId": "s40",
-        "text": "Deep focus session; solved the tricky refactor step.",
-        "createdAt": 1787714460000
+        "sessionId": "s34",
+        "text": "Outline for the newsletter is done.",
+        "createdAt": 1787710980000
       },
       {
         "id": "n31",
-        "sessionId": "s42",
+        "sessionId": "s36",
         "text": "Good momentum — finished the first half of the chapter.",
-        "createdAt": 1787696160000
+        "createdAt": 1787800920000
       },
       {
         "id": "n32",
-        "sessionId": "s46",
-        "text": "Outline for the newsletter is done.",
-        "createdAt": 1787970060000
+        "sessionId": "s37",
+        "text": "Deep focus session; solved the tricky refactor step.",
+        "createdAt": 1787860320000
       },
       {
         "id": "n33",
-        "sessionId": "s49",
-        "text": "Good momentum — finished the first half of the chapter.",
-        "createdAt": 1788133440000
+        "sessionId": "s38",
+        "text": "Got through 3 pages of vocabulary, next session reviews.",
+        "createdAt": 1788052200000
       },
       {
         "id": "n34",
-        "sessionId": "s50",
-        "text": "Deep focus session; solved the tricky refactor step.",
-        "createdAt": 1788134160000
+        "sessionId": "s40",
+        "text": "Good momentum — finished the first half of the chapter.",
+        "createdAt": 1788141180000
       },
       {
         "id": "n35",
-        "sessionId": "s52",
+        "sessionId": "s42",
         "text": "Flow was great; stopped while still interested.",
-        "createdAt": 1788204540000
+        "createdAt": 1788195660000
       },
       {
         "id": "n36",
-        "sessionId": "s53",
-        "text": "Good momentum — finished the first half of the chapter.",
-        "createdAt": 1788281520000
+        "sessionId": "s43",
+        "text": "Outline for the newsletter is done.",
+        "createdAt": 1788395040000
       },
       {
         "id": "n37",
-        "sessionId": "s56",
+        "sessionId": "s45",
+        "text": "Good momentum — finished the first half of the chapter.",
+        "createdAt": 1788403080000
+      },
+      {
+        "id": "n38",
+        "sessionId": "s47",
+        "text": "Deep focus session; solved the tricky refactor step.",
+        "createdAt": 1788542460000
+      },
+      {
+        "id": "n39",
+        "sessionId": "s48",
         "text": "Trimmed the podcast intro; outro still needs work.",
-        "createdAt": 1788475500000
+        "createdAt": 1788649920000
+      },
+      {
+        "id": "n40",
+        "sessionId": "s49",
+        "text": "Outline for the newsletter is done.",
+        "createdAt": 1788718980000
+      },
+      {
+        "id": "n41",
+        "sessionId": "s50",
+        "text": "Outline for the newsletter is done.",
+        "createdAt": 1788827400000
       }
     ],
     "activeSessionId": null

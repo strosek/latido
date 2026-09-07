@@ -5,14 +5,14 @@ Status: done
 ## Goal
 
 Add an information button on the left side of the header that opens a modal explaining the app's
-philosophy and basic usage, so a first-time visitor quickly understands what Pomoflow is and how
+philosophy and basic usage, so a first-time visitor quickly understands what Latido is and how
 to use it.
 
 ## Requirements
 
 - An icon button (e.g. `info` / help icon) on the **left** side of the header (0040 button
   aesthetics, 0027 icon buttons), next to the title.
-- Opens a modal (reuse the overlay/dialog system in `dialogs.ts`) titled "About Pomoflow".
+- Opens a modal (reuse the overlay/dialog system in `dialogs.ts`) titled "About Latido".
 - Content covers:
   - **Philosophy** — "one thing at a time"; calm, minimal, no account/no server; data lives in
     the browser; built around Flowtime (deep, open-ended work) and Pomodoro (steady progress).
