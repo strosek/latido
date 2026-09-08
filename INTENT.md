@@ -1,4 +1,4 @@
-Latido is a task tracker that helps me work in sync with my natural rhythm: manage my tasks,
+UltradianDrift is a task tracker that helps me work in sync with my natural rhythm: manage my tasks,
 sort them into urgent/important categories, add priorities, and track work sessions associated
 with them using flowtime or the pomodoro techniques. This app should be simple, but informative,
 helpful when I feel overwhelmed by many things to do.

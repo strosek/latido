@@ -20,7 +20,7 @@ so users choose with understanding instead of familiarity.
   chosen task intact.
 - Content (short and calm, per INTENT.md — skimmable for an ADHD user):
   - **Your natural rhythm** — the ~90-minute ultradian wave: you're genuinely sharp in
-    waves, then your energy dips and you need rest. Latido works *with* this.
+    waves, then your energy dips and you need rest. UltradianDrift works *with* this.
   - **Flowtime** — a count-up session: start when you're ready, keep going while you're
     in flow, and finish when your energy dips. No interrupting bell.
   - **Pomodoro** — fixed work/break blocks (e.g. 25 + 5): a forcing function that's great

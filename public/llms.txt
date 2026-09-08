@@ -1,9 +1,9 @@
-# Latido
+# UltradianDrift
 
 > Work in sync with your natural rhythm.
 
-Latido (Spanish for "heartbeat") is a free, browser-only task tracker for the way your energy
-actually moves — not the way a clock says it should. It syncs tasks and focus sessions with the
+UltradianDrift (your natural ~90-minute focus rhythm, allowed to drift) is a free, browser-only
+task tracker for the way your energy actually moves — not the way a clock says it should. It syncs tasks and focus sessions with the
 body's natural ultradian rhythm: the ~90-minute waves when people are genuinely sharp, followed
 by the rest they need. **Flowtime** lets users ride a full wave of deep, open-ended work and stop
 when their energy dips; **Pomodoro** is available when they want a structured forcing function

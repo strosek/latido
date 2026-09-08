@@ -54,12 +54,12 @@ const app = document.querySelector<HTMLDivElement>("#app")!;
 
 /** Subtle donation link shown in the footer. */
 function koFiHtml(): string {
-  return `<a class="ko-fi" href="https://ko-fi.com/edcorona" target="_blank" rel="noopener noreferrer" title="Support Latido on Ko-fi">☕ Support on Ko-fi</a>`;
+  return `<a class="ko-fi" href="https://ko-fi.com/edcorona" target="_blank" rel="noopener noreferrer" title="Support UltradianDrift on Ko-fi">☕ Support on Ko-fi</a>`;
 }
 
 /** Keep the browser tab title useful during a session (countdown / elapsed). */
 export function updateDocumentTitle(clockText: string | null): void {
-  document.title = clockText ? `${clockText} · Latido` : "Latido";
+  document.title = clockText ? `${clockText} · UltradianDrift` : "UltradianDrift";
 }
 
 /* ------------------------------------------------------------------ */
@@ -214,9 +214,9 @@ function pageHeaderHtml(): string {
   return `
     <header class="app-header">
       <div class="app-title">
-        <img class="logo" src="favicon.svg" alt="Latido logo" />
+        <img class="logo" src="favicon.svg" alt="UltradianDrift logo" />
         <div>
-          <h1>Latido</h1>
+          <h1>UltradianDrift</h1>
           <p class="tagline">Work in sync with your natural rhythm.</p>
         </div>
       </div>
@@ -225,7 +225,7 @@ function pageHeaderHtml(): string {
         <button class="icon-btn" data-action="view-dashboard" title="Dashboard" aria-label="Dashboard">${icon("dashboard")}</button>
         <button class="icon-btn" data-action="view-history" title="History" aria-label="History">${icon("history")}</button>
         <button class="icon-btn" data-action="open-settings" title="Settings" aria-label="Settings">${icon("settings")}</button>
-        <button class="icon-btn" data-action="open-about" title="About Latido" aria-label="About Latido">${icon("info")}</button>
+        <button class="icon-btn" data-action="open-about" title="About UltradianDrift" aria-label="About UltradianDrift">${icon("info")}</button>
       </nav>
     </header>`;
 }

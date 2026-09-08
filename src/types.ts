@@ -138,7 +138,7 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 export interface ExportPayload {
-  app: "latido";
+  app: "ultradiandrift";
   version: 1;
   exportedAt: number;
   settings: Settings;

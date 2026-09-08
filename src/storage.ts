@@ -12,10 +12,10 @@ import type {
 const PRESETS = ["chime", "soft", "breeze"] as const;
 const DAY_MS = 86_400_000;
 
-export const STATE_KEY = "latido:v1";
-export const SETTINGS_KEY = "latido:settings:v1";
-export const BACKUP_KEY = "latido:backup:v1";
-export const EXPORT_APP = "latido";
+export const STATE_KEY = "ultradiandrift:v1";
+export const SETTINGS_KEY = "ultradiandrift:settings:v1";
+export const BACKUP_KEY = "ultradiandrift:backup:v1";
+export const EXPORT_APP = "ultradiandrift";
 
 // Legacy "Pomoflow" identifiers, kept so pre-rename data migrates cleanly.
 const LEGACY_STATE_KEY = "pomoflow:v1";
@@ -336,11 +336,11 @@ export function parseImport(text: string): ImportResult {
   }
 
   if (typeof obj !== "object" || obj === null) {
-    return { ok: false, error: "This file is not a Latido export." };
+    return { ok: false, error: "This file is not an UltradianDrift export." };
   }
   const rec = obj as Record<string, unknown>;
   if (rec.app !== EXPORT_APP && rec.app !== "pomoflow") {
-    return { ok: false, error: "This file is not a Latido export." };
+    return { ok: false, error: "This file is not an UltradianDrift export." };
   }
   if (rec.version !== EXPORT_VERSION) {
     return { ok: false, error: `Unsupported export version (${String(rec.version)}).` };
@@ -410,7 +410,7 @@ export function loadBackup(): BackupData | null {
 /* Daily snapshot backups (0053)                                       */
 /* ------------------------------------------------------------------ */
 
-export const SNAPSHOT_PREFIX = "latido:snapshot:";
+export const SNAPSHOT_PREFIX = "ultradiandrift:snapshot:";
 const SNAPSHOT_MAX = 3;
 
 function snapshotKey(day: string): string {
@@ -498,7 +498,7 @@ export function removeSnapshot(key: string): void {
 /* First-run onboarding flag (0070)                                    */
 /* ------------------------------------------------------------------ */
 
-const ONBOARDED_KEY = "latido:onboarded:v1";
+const ONBOARDED_KEY = "ultradiandrift:onboarded:v1";
 
 /** Whether the first-run welcome has been dismissed (stored separately from data). */
 export function isOnboarded(): boolean {

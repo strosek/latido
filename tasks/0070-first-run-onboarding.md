@@ -5,7 +5,7 @@ Status: done
 ## Goal
 
 The hardest moment for a new user is a completely empty board. Offer a short,
-dismissible welcome that teaches the three core loops of Latido (add a task → start
+dismissible welcome that teaches the three core loops of UltradianDrift (add a task → start
 focus → see your rhythm) and offers to load example data. This is intentionally small —
 no multi-step wizard, just one calm screen.
 

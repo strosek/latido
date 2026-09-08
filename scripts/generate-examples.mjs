@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generates example Latido export files under examples/ with dates relative
+ * Generates example UltradianDrift export files under examples/ with dates relative
  * to "today", so loading them exercises the dashboard, focus streak, and the
  * Today/Later plan sections. Deterministic for a given day.
  *
@@ -72,7 +72,7 @@ function taskFrom(spec) {
 
 function writeExport(name, settings, state) {
   const payload = {
-    app: "latido",
+    app: "ultradiandrift",
     version: 1,
     exportedAt: Date.now(),
     settings,

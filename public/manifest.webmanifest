@@ -1,6 +1,6 @@
 {
-  "name": "Latido",
-  "short_name": "Latido",
+  "name": "UltradianDrift",
+  "short_name": "UltradianDrift",
   "description": "Free, private task tracker and focus timer that works with your body's natural rhythm.",
   "start_url": "./",
   "display": "standalone",

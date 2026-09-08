@@ -204,7 +204,7 @@ export function parseCsvTasks(rows: string[][]): { tasks: CsvTaskStub[]; skipped
 
     let quadrant: Quadrant;
     if (isTodoist) {
-      // Todoist priority: 1 (highest) .. 4 (lowest); Latido quadrant defaults to q2.
+      // Todoist priority: 1 (highest) .. 4 (lowest); UltradianDrift quadrant defaults to q2.
       quadrant = "q2";
     } else {
       quadrant = quadrantIdx >= 0 ? parseQuadrant(row[quadrantIdx] ?? "") : "q2";

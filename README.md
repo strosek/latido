@@ -1,9 +1,9 @@
-# Latido
+# UltradianDrift
 
 _Work in sync with your natural rhythm._
 
-Latido (Spanish for "heartbeat") is a free, browser-only task tracker for the way your energy
-actually moves — not the way a clock says it should. It syncs your tasks and focus sessions with
+UltradianDrift (your natural ~90-minute focus rhythm, allowed to drift) is a free, browser-only
+task tracker for the way your energy actually moves — not the way a clock says it should. It syncs your tasks and focus sessions with
 your body's natural pulses: the ~90-minute ultradian waves when you're genuinely sharp, followed
 by the rest you actually need.
 
@@ -13,11 +13,11 @@ function against procrastination. Same app, two honest tools, chosen by you.
 
 No account. No subscription. No ads. No tracking. Your data lives in your browser.
 
-## Why Latido?
+## Why UltradianDrift?
 
 Most focus apps are Pomodoro timers in disguise: rigid 25-minute blocks that interrupt you
 precisely when you're in flow. That's a useful forcing function if you're avoiding work — and
-distracting if you're not. Latido is built on the opposite assumption: you'll focus better when
+distracting if you're not. UltradianDrift is built on the opposite assumption: you'll focus better when
 your work follows your body's natural rhythm.
 
 - **Built for your ultradian rhythm.** Flowtime's count-up timer lets you work through a full

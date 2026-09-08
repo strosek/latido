@@ -4,7 +4,7 @@ Status: done
 
 ## Goal
 
-Give Latido a distinct, calm identity. Today everything renders in system-ui
+Give UltradianDrift a distinct, calm identity. Today everything renders in system-ui
 (`style.css` `:root` font-family), which is safe but characterless. Introduce a
 self-hosted variable font so the PWA keeps working fully offline.
 
@@ -26,7 +26,7 @@ self-hosted variable font so the PWA keeps working fully offline.
 - The new type renders on the board, dashboard, session, and dialogs.
 - Works offline after first load (font is in the service-worker cache).
 - Text is readable from first paint — no jarring FOIT/FOUT.
-- The wordmark reads as "Latido" with a warmer, more distinctive voice than system-ui.
+- The wordmark reads as "UltradianDrift" with a warmer, more distinctive voice than system-ui.
 
 ## Nice to have
 

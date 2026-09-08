@@ -14,7 +14,7 @@ Provide a human-readable, portable export of session history (in addition to the
 - Generate a `.md` document grouping finished sessions, e.g. by task, with date, technique,
   work time, pomodoros, and any restart notes.
 - Include per-task totals at the end (reuse 0002/0007 calculations).
-- Trigger a file download (`latido-history-YYYY-MM-DD.md`).
+- Trigger a file download (`ultradiandrift-history-YYYY-MM-DD.md`).
 - Read-only: does not alter state.
 
 ## Acceptance criteria

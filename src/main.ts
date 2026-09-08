@@ -23,7 +23,7 @@ document.addEventListener("pointerdown", () => unlockAudio(), { once: true });
 onStorageQuotaExceeded(() => {
   const overlay = openDialog(`
     <h3>Storage is full</h3>
-    <p class="dialog-text">Latido couldn't save your latest change. Nothing is lost yet, but new
+    <p class="dialog-text">UltradianDrift couldn't save your latest change. Nothing is lost yet, but new
     changes won't be saved until you free up space. Export your data to keep it safe.</p>
     <div class="dialog-actions">
       <button id="quota-export" class="primary">Export data</button>
@@ -31,7 +31,7 @@ onStorageQuotaExceeded(() => {
     </div>`);
   overlay.querySelector("#quota-export")!.addEventListener("click", () => {
     downloadTextFile(
-      `latido-export-${new Date().toISOString().slice(0, 10)}.json`,
+      `ultradiandrift-export-${new Date().toISOString().slice(0, 10)}.json`,
       JSON.stringify(buildExport(settings, state), null, 2),
       "application/json",
     );

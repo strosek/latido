@@ -14,7 +14,7 @@ describe("app bootstrap", () => {
   it("renders the board with the expected shell", async () => {
     await import("./main");
 
-    expect(document.title).toBe("Latido");
+    expect(document.title).toBe("UltradianDrift");
     const html = document.querySelector("#app")!.innerHTML;
     expect(html).toContain("app-header");
     expect(html).toContain("What do you need to do");

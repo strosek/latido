@@ -14,4 +14,4 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Sitemap: https://strosek.github.io/latido/sitemap.xml
+Sitemap: https://strosek.github.io/ultradiandrift/sitemap.xml

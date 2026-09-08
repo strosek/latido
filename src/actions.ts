@@ -744,7 +744,7 @@ function openEditTask(id: string): void {
 /* Settings / data management                                          */
 /* ------------------------------------------------------------------ */
 
-const ISSUES_URL = "https://github.com/strosek/latido/issues";
+const ISSUES_URL = "https://github.com/strosek/ultradiandrift/issues";
 
 function toggleTheme(): void {
   settings.theme = settings.theme === "night" ? "day" : "night";
@@ -755,13 +755,13 @@ function toggleTheme(): void {
 
 function openAboutModal(): void {
   const overlay = openDialog(`
-    <h3>About Latido</h3>
+    <h3>About UltradianDrift</h3>
     <div class="about">
-      <p><strong>Work in sync with your natural rhythm.</strong> Latido is a free, browser-only
+      <p><strong>Work in sync with your natural rhythm.</strong> UltradianDrift is a free, browser-only
       task tracker that syncs your tasks and focus sessions with your body's natural pulses —
       the ~90-minute ultradian waves when you're genuinely sharp, followed by the rest you need.</p>
       <h4>Why it works</h4>
-      <p>Most focus apps interrupt you right when you're in flow. Latido treats <strong>Flowtime</strong>
+      <p>Most focus apps interrupt you right when you're in flow. UltradianDrift treats <strong>Flowtime</strong>
       (count-up, work until your energy dips) as the default way to focus, and keeps
       <strong>Pomodoro</strong> around for when you need a forcing function against
       procrastination. After ~90 minutes — one natural ultradian wave — Flowtime can gently remind
@@ -1029,7 +1029,7 @@ function openSettings(): void {
 
   exportBtn.addEventListener("click", () => {
     downloadTextFile(
-      `latido-export-${new Date().toISOString().slice(0, 10)}.json`,
+      `ultradiandrift-export-${new Date().toISOString().slice(0, 10)}.json`,
       JSON.stringify(buildExport(settings, state), null, 2),
       "application/json",
     );
@@ -1037,7 +1037,7 @@ function openSettings(): void {
 
   exportMdBtn.addEventListener("click", () => {
     downloadTextFile(
-      `latido-history-${new Date().toISOString().slice(0, 10)}.md`,
+      `ultradiandrift-history-${new Date().toISOString().slice(0, 10)}.md`,
       buildMarkdownHistory(),
       "text/markdown;charset=utf-8",
     );
@@ -1218,7 +1218,7 @@ export async function loadExampleData(): Promise<void> {
   }
   const overlay = openDialog(`
     <h3>Load example data?</h3>
-    <p class="dialog-text">This replaces your current data with a realistic sample (${result.payload.data.tasks.length} tasks, ${result.payload.data.sessions.length} sessions) so you can explore Latido right away. A backup of your current data is saved first.</p>
+    <p class="dialog-text">This replaces your current data with a realistic sample (${result.payload.data.tasks.length} tasks, ${result.payload.data.sessions.length} sessions) so you can explore UltradianDrift right away. A backup of your current data is saved first.</p>
     <div class="dialog-actions">
       <button id="ex-cancel" class="ghost">Cancel</button>
       <button id="ex-ok" class="primary">Load</button>
@@ -1336,7 +1336,7 @@ function clearAllData(): void {
 }
 
 function buildMarkdownHistory(): string {
-  const lines: string[] = ["# Latido history", ""];
+  const lines: string[] = ["# UltradianDrift history", ""];
   const sessions = doneSessions(state);
   if (!sessions.length) {
     lines.push("No finished sessions yet.");

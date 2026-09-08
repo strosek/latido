@@ -245,9 +245,9 @@ describe("parseImport", () => {
     expect(parseImport("not json").ok).toBe(false);
   });
 
-  it("rejects non-Latido or wrong-version files", () => {
+  it("rejects non-UltradianDrift or wrong-version files", () => {
     expect(parseImport(JSON.stringify({ app: "other", version: 1 })).ok).toBe(false);
-    expect(parseImport(JSON.stringify({ app: "latido", version: 99 })).ok).toBe(false);
+    expect(parseImport(JSON.stringify({ app: "ultradiandrift", version: 99 })).ok).toBe(false);
   });
 
   it("still accepts legacy pomoflow exports", () => {
@@ -263,13 +263,13 @@ describe("parseImport", () => {
   });
 
   it("rejects exports missing data arrays", () => {
-    expect(parseImport(JSON.stringify({ app: "latido", version: 1, data: {} })).ok).toBe(false);
+    expect(parseImport(JSON.stringify({ app: "ultradiandrift", version: 1, data: {} })).ok).toBe(false);
   });
 
   it("parses a valid export and sanitizes it", () => {
     const result = parseImport(
       JSON.stringify({
-        app: "latido",
+        app: "ultradiandrift",
         version: 1,
         data: { tasks: [], sessions: [], notes: [] },
         settings: { ...DEFAULT_SETTINGS, pomodoroWorkMin: 5000 },
@@ -316,7 +316,7 @@ describe("persistence", () => {
   });
 
   it("falls back to defaults on corrupt storage", () => {
-    store.set("latido:v1", "{oops");
+    store.set("ultradiandrift:v1", "{oops");
     expect(loadState()).toEqual(emptyState());
   });
 
@@ -333,7 +333,7 @@ describe("persistence", () => {
     store.set("pomoflow:settings:v1", JSON.stringify({ ...DEFAULT_SETTINGS }));
     const state = loadState();
     expect(state.tasks[0].title).toBe("Old task");
-    expect(store.get("latido:v1")).toBeTruthy();
+    expect(store.get("ultradiandrift:v1")).toBeTruthy();
     expect(store.get("pomoflow:v1")).toBeUndefined();
     expect(loadSettings()).toEqual(DEFAULT_SETTINGS);
   });
