@@ -156,6 +156,91 @@ describe("settings tabs (0076)", () => {
   });
 });
 
+describe("flowtime vs pomodoro explainer (0077)", () => {
+  it("opens the chooser with a 'What's the difference?' control", () => {
+    addTask("Deep work");
+    document
+      .querySelector<HTMLElement>(".task-start [data-action='start']")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    const overlay = document.querySelector<HTMLElement>(".overlay")!;
+    expect(overlay.querySelector('[data-tech="learn"]')!.textContent).toContain(
+      "What's the difference?",
+    );
+    overlay.remove();
+  });
+
+  it("shows the explainer without closing the chooser", () => {
+    addTask("Deep work");
+    document
+      .querySelector<HTMLElement>(".task-start [data-action='start']")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    document
+      .querySelector<HTMLElement>('[data-tech="learn"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    const overlays = document.querySelectorAll<HTMLElement>(".overlay");
+    expect(overlays.length).toBe(2); // chooser stays underneath
+    const explainer = overlays[overlays.length - 1];
+    expect(explainer.textContent).toContain("ultradian");
+    expect(explainer.textContent).toContain("Flowtime");
+    expect(explainer.textContent).toContain("Pomodoro");
+    expect(explainer.querySelector("#explain-ok")).not.toBeNull();
+    explainer.remove();
+    overlays[0].remove();
+  });
+});
+
+describe("rest guide (0078)", () => {
+  it("shows the Learn control on the running break and opens the guide", async () => {
+    const { setBreakState } = await import("./state");
+    const { render } = await import("./views");
+    setBreakState({
+      startedAt: Date.now(),
+      endsAt: Date.now() + 5 * 60 * 1000,
+      taskId: "t1",
+      technique: "flowtime",
+      done: false,
+    });
+    render();
+
+    const learn = document.querySelector<HTMLElement>('[data-action="rest-guide"]')!;
+    expect(learn.textContent).toContain("Learn to rest");
+    learn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    const overlay = document.querySelector<HTMLElement>(".overlay")!;
+    expect(overlay.textContent).toContain("How to actually rest");
+    expect(overlay.textContent).toContain("Move");
+    expect(overlay.textContent).toContain("Breathe");
+    overlay.remove();
+    setBreakState(null);
+    render();
+  });
+
+  it("keeps the break countdown running while the guide is open", async () => {
+    const { setBreakState } = await import("./state");
+    const { render } = await import("./views");
+    setBreakState({
+      startedAt: Date.now(),
+      endsAt: Date.now() + 5 * 60 * 1000,
+      taskId: "t1",
+      technique: "pomodoro",
+      done: false,
+    });
+    render();
+
+    document
+      .querySelector<HTMLElement>('[data-action="rest-guide"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(document.querySelectorAll<HTMLElement>(".overlay").length).toBe(1);
+    // The session view behind the overlay is still a break with a clock.
+    const overlay = document.querySelector<HTMLElement>(".overlay")!;
+    overlay.remove();
+    expect(document.querySelector("#app")!.textContent).toContain("Break");
+    setBreakState(null);
+    render();
+  });
+});
+
 describe("completed section (0075)", () => {
   it("folds completed tasks into a collapsed section and expands on click", async () => {
     const { state } = await import("./state");

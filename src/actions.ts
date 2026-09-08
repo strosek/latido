@@ -1413,16 +1413,71 @@ function promptStartSession(taskId: string): void {
     <p class="dialog-task">${escapeHtml(task.title)}</p>
     <button class="primary" data-tech="flowtime">Flowtime · open</button>
     <button class="primary" data-tech="pomodoro">Pomodoro · ${workLabel}</button>
+    <button class="ghost" data-tech="learn">What's the difference?</button>
     <button class="ghost" data-tech="cancel">Cancel</button>`);
 
   overlay.addEventListener("click", (e) => {
     const target = (e.target as HTMLElement).closest("[data-tech]") as HTMLElement | null;
     if (!target) return;
-    const tech = target.dataset.tech as Technique | "cancel";
+    const tech = target.dataset.tech as Technique | "cancel" | "learn";
+    if (tech === "learn") {
+      openFlowtimeExplain();
+      return;
+    }
     overlay.remove();
     if (tech === "cancel") return;
     startSession(taskId, tech);
   });
+}
+
+/** 0077: explainer for the Flowtime vs Pomodoro technique chooser. */
+function openFlowtimeExplain(): void {
+  const overlay = openDialog(`
+    <h3>Flowtime vs Pomodoro</h3>
+    <div class="about">
+      <h4>Your natural rhythm</h4>
+      <p>Attention arrives in <strong>~90-minute ultradian waves</strong>: you're genuinely sharp,
+      then your energy dips and you need rest. UltradianDrift works <em>with</em> this rhythm
+      instead of against it.</p>
+      <h4>Flowtime</h4>
+      <p>A <strong>count-up</strong> session: start when you're ready, keep going while you're in
+      flow, and finish when your energy dips. No interrupting bell.</p>
+      <h4>Pomodoro</h4>
+      <p><strong>Fixed work/break blocks</strong> (e.g. ${settings.pomodoroWorkMin} + ${settings.pomodoroShortBreakMin} minutes): a forcing
+      function that's great when you're procrastinating and need external structure.</p>
+      <p class="dialog-text"><em>Not sure? Start with Flowtime — you can switch to Pomodoro any time.</em></p>
+    </div>
+    <div class="dialog-actions">
+      <button id="explain-ok" class="primary">Got it</button>
+    </div>`);
+  overlay.querySelector("#explain-ok")!.addEventListener("click", () => overlay.remove());
+}
+
+/** 0078: short practical guide shown during a break. */
+function openRestGuide(): void {
+  const overlay = openDialog(`
+    <h3>How to actually rest</h3>
+    <div class="about">
+      <p>A break only recharges you if you <strong>actually rest</strong>. Scrolling a phone keeps
+      the brain active and defeats the recovery that makes your next ~90-minute focus wave sharp.
+      Pick something that shifts your body into rest mode:</p>
+      <h4>Move</h4>
+      <p>Walk, stretch, step outside; shake off seated tension.</p>
+      <h4>Eyes</h4>
+      <p>Look at something 20+ feet away for 20 seconds; reduce screen time.</p>
+      <h4>Breathe</h4>
+      <p>A few slow, deep breaths (e.g. 4-7-8) to shift into rest mode.</p>
+      <h4>Fuel</h4>
+      <p>Water and a light snack; skip the sugar spike.</p>
+      <h4>Unplug</h4>
+      <p>No screens: daydream, listen to music, chat, or take a tiny nap.</p>
+      <h4>Nature</h4>
+      <p>A plant or window view lowers stress markers quickly.</p>
+    </div>
+    <div class="dialog-actions">
+      <button id="rest-guide-ok" class="primary">Got it</button>
+    </div>`);
+  overlay.querySelector("#rest-guide-ok")!.addEventListener("click", () => overlay.remove());
 }
 
 export function pauseSession(session: Session): void {
@@ -1986,6 +2041,9 @@ export function handleAction(
       break;
     case "start-next":
       beginFocusFromBreak();
+      break;
+    case "rest-guide":
+      openRestGuide();
       break;
     case "skip-break":
     case "end-break":

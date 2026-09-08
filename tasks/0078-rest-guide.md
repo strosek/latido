@@ -1,6 +1,6 @@
 # 0078 — Rest-session education guide
 
-Status: pending
+Status: done
 
 ## Goal
 

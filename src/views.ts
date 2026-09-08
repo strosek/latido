@@ -1153,6 +1153,7 @@ function renderBreak(): void {
         </header>
         <div class="session-controls">
           <button class="primary" data-action="start-next">Start focusing</button>
+          <button class="ghost" data-action="rest-guide">Learn to rest</button>
           <button class="ghost" data-action="end-break">Done</button>
         </div>
       </main>`,
@@ -1174,6 +1175,7 @@ function renderBreak(): void {
       ${clockFrameHtml(formatMs(remaining), { ringFrac: total > 0 ? remaining / total : 0 })}
       <div class="session-controls">
         <button class="primary" data-action="start-next">Start now</button>
+        <button class="ghost" data-action="rest-guide">Learn to rest</button>
         <button class="icon-btn" data-action="skip-break" title="Skip break" aria-label="Skip break">${icon("skip")}</button>
       </div>
     </main>

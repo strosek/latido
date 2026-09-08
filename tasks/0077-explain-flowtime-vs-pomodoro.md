@@ -1,6 +1,6 @@
 # 0077 — Explain Flowtime vs Pomodoro when choosing a session
 
-Status: pending
+Status: done
 
 ## Goal
 
