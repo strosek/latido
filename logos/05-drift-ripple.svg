@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- Concentric tide rings radiating outward, with a small drifting dot -->
-  <circle cx="64" cy="64" r="44" fill="none" stroke="#2f6e4f" stroke-width="5"/>
-  <circle cx="64" cy="64" r="26" fill="none" stroke="#5d9c59" stroke-width="5"/>
-  <circle cx="64" cy="64" r="8" fill="#a3c585"/>
-  <circle cx="64" cy="20" r="5" fill="#a3c585"/>
-</svg>

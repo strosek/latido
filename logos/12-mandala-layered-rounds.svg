@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Green mandala: layered rounded petals, subtle check in the center -->
+  <defs>
+    <g id="petalA">
+      <path d="M0 -48 C7 -48 12 -38 12 -24 C12 -12 7 -5 0 -3 C-7 -5 -12 -12 -12 -24 C-12 -38 -7 -48 0 -48 Z" fill="#5d9c59"/>
+    </g>
+    <g id="petalB">
+      <path d="M0 -34 C4 -34 7 -28 7 -18 C7 -9 4 -4 0 -3 C-4 -4 -7 -9 -7 -18 C-7 -28 -4 -34 0 -34 Z" fill="#a3c585"/>
+    </g>
+  </defs>
+  <circle cx="64" cy="64" r="58" fill="none" stroke="#2f6e4f" stroke-width="3"/>
+  <g transform="translate(64 64)">
+    <use href="#petalA" transform="rotate(0)"/>
+    <use href="#petalA" transform="rotate(60)"/>
+    <use href="#petalA" transform="rotate(120)"/>
+    <use href="#petalA" transform="rotate(180)"/>
+    <use href="#petalA" transform="rotate(240)"/>
+    <use href="#petalA" transform="rotate(300)"/>
+    <use href="#petalB" transform="rotate(30)"/>
+    <use href="#petalB" transform="rotate(90)"/>
+    <use href="#petalB" transform="rotate(150)"/>
+    <use href="#petalB" transform="rotate(210)"/>
+    <use href="#petalB" transform="rotate(270)"/>
+    <use href="#petalB" transform="rotate(330)"/>
+  </g>
+  <circle cx="64" cy="64" r="12" fill="#2f6e4f"/>
+  <path d="M59.5 63.5 L62.8 67 L68.5 60.5" fill="none" stroke="#eaf9ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

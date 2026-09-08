@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- Three smooth tidal strata drifting at different phases -->
-  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M8 46 C16 32 24 32 32 46 C40 60 48 60 56 46 C64 32 72 32 80 46 C88 60 96 60 104 46 C110 38 116 38 120 46" stroke="#2f6e4f" stroke-width="9"/>
-    <path d="M8 70 C16 56 24 56 32 70 C40 84 48 84 56 70 C64 56 72 56 80 70 C88 84 96 84 104 70 C110 62 116 62 120 70" stroke="#5d9c59" stroke-width="9"/>
-    <path d="M8 94 C16 80 24 80 32 94 C40 108 48 108 56 94 C64 80 72 80 80 94 C88 108 96 108 104 94 C110 86 116 86 120 94" stroke="#a3c585" stroke-width="9"/>
-  </g>
-</svg>

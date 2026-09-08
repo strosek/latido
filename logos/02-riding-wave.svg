@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- A smooth ocean swell you drift on -->
-  <path d="M4 102 C30 102 46 78 64 62 C82 46 104 40 124 52" fill="none" stroke="#5d9c59" stroke-width="11" stroke-linecap="round"/>
-  <!-- Your energy riding the crest, with a soft ripple -->
-  <circle cx="68" cy="60" r="8" fill="#a3c585"/>
-  <circle cx="68" cy="60" r="15" fill="none" stroke="#2f6e4f" stroke-width="3"/>
-</svg>

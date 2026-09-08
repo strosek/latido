@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- Two tides flowing toward and away from a calm center -->
-  <path d="M6 44 C30 32 46 36 64 48 C82 60 98 60 122 46" fill="none" stroke="#a3c585" stroke-width="8" stroke-linecap="round"/>
-  <path d="M6 84 C30 96 46 92 64 80 C82 68 98 68 122 82" fill="none" stroke="#5d9c59" stroke-width="8" stroke-linecap="round"/>
-  <circle cx="64" cy="64" r="6" fill="#2f6e4f"/>
-</svg>

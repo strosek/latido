@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Green mandala: eight soft rounded petals, subtle check in the center -->
+  <defs>
+    <g id="petal">
+      <path d="M0 -46 C6 -46 10 -38 10 -26 C10 -14 6 -6 0 -4 C-6 -6 -10 -14 -10 -26 C-10 -38 -6 -46 0 -46 Z" fill="#5d9c59"/>
+      <path d="M0 -46 C3 -46 5 -38 5 -26 C5 -14 3 -6 0 -4 C-3 -6 -5 -14 -5 -26 C-5 -38 -3 -46 0 -46 Z" fill="#a3c585"/>
+    </g>
+  </defs>
+  <circle cx="64" cy="64" r="58" fill="none" stroke="#2f6e4f" stroke-width="3"/>
+  <circle cx="64" cy="64" r="48" fill="none" stroke="#a3c585" stroke-width="1.5"/>
+  <g transform="translate(64 64)">
+    <use href="#petal" transform="rotate(0)"/>
+    <use href="#petal" transform="rotate(45)"/>
+    <use href="#petal" transform="rotate(90)"/>
+    <use href="#petal" transform="rotate(135)"/>
+    <use href="#petal" transform="rotate(180)"/>
+    <use href="#petal" transform="rotate(225)"/>
+    <use href="#petal" transform="rotate(270)"/>
+    <use href="#petal" transform="rotate(315)"/>
+  </g>
+  <circle cx="64" cy="64" r="12" fill="#2f6e4f"/>
+  <path d="M59.5 63.5 L62.8 67 L68.5 60.5" fill="none" stroke="#eaf9ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
