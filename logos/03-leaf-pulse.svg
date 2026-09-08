@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- Leaf -->
-  <path d="M64 12 C 38 32 22 56 22 80 C 22 106 40 116 64 116 C 88 116 106 106 106 80 C 106 56 90 32 64 12 Z" fill="#2f6e4f"/>
-  <path d="M64 24 C 52 40 46 60 46 80 C 46 96 54 106 64 106 C 74 106 82 96 82 80 C 82 60 76 40 64 24 Z" fill="#5d9c59"/>
-  <!-- Heartbeat pulse -->
-  <polyline points="30,80 44,80 48,80 52,66 56,80 60,80 67,44 74,80 78,80 82,92 86,80 98,80"
-    fill="none" stroke="#a3c585" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
