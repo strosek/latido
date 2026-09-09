@@ -375,15 +375,12 @@ a.ghost:hover {
 }
 
 /* Task list */
+/* The rows live inside a .section card, which supplies the border + background. */
 
 .task-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
 }
 
 .task {
@@ -678,9 +675,9 @@ button.primary.icon-btn:hover {
     filter: drop-shadow(0 0 0 rgba(127, 176, 105, 0));
   }
   50% {
-    transform: scale(1.015);
-    opacity: 0.92;
-    filter: drop-shadow(0 0 22px rgba(127, 176, 105, 0.35));
+    transform: scale(1.06);
+    opacity: 0.9;
+    filter: drop-shadow(0 0 34px rgba(127, 176, 105, 0.6));
   }
 }
 
@@ -1345,9 +1342,9 @@ button:focus-visible {
   padding: 6px 10px;
 }
 
-/* Plan sections (0029/0030) */
+/* Board sections — shared card container (0029/0030/0018/0075) */
 
-.plan-section {
+.section {
   margin: 18px 0 0;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1355,9 +1352,50 @@ button:focus-visible {
   padding: 12px 14px;
 }
 
-.plan-section.deferred {
+.section.deferred {
   border-style: dashed;
   opacity: 0.85;
+}
+
+.section-title {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/* Every board section has a collapsible toggle header (0079). */
+.section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-dim);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.section-toggle:hover {
+  color: var(--text);
+}
+
+.section-chevron {
+  margin-left: auto;
+  color: var(--text-faint);
+  transition: transform 0.15s ease;
+}
+
+.section.open .section-chevron {
+  transform: rotate(180deg);
+}
+
+.section-body {
+  margin-top: 10px;
 }
 
 .later-date {
@@ -1471,21 +1509,19 @@ button:focus-visible {
   min-width: 0;
 }
 
-/* Quick tasks (0018) */
+/* Quick tasks (0018) — compact rows share the task-row look inside a .section. */
 
-.quick-section {
-  margin: 18px 0 0;
-  background: var(--surface);
-  border: 1px solid var(--moss);
-  border-radius: var(--radius);
-  padding: 12px 14px;
+.section .quick-list {
+  gap: 0;
 }
 
-.quick-title {
-  margin: 0 0 8px;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--text-dim);
+.section .quick-item {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.section .quick-item:last-child {
+  border-bottom: none;
 }
 
 .quick-list {
@@ -1498,9 +1534,11 @@ button:focus-visible {
 }
 
 .quick-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
+  font-size: var(--text-sm);
 }
 
 .quick-item .task-title {
@@ -1519,37 +1557,8 @@ button:focus-visible {
   border-color: transparent;
 }
 
-/* Completed tasks section (0075) — folded to a single header row by default. */
-
-.done-section {
-  margin: 18px 0 0;
-}
-
-.done-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px 14px;
-  color: var(--text-dim);
-  font-weight: 600;
-  text-align: left;
-  transition:
-    color 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.done-toggle:hover {
-  color: var(--text);
-  border-color: var(--text-faint);
-}
-
-.done-title {
-  font-size: var(--text-sm);
-}
+/* Completed tasks section (0075/0079) — a normal .section card that starts
+   collapsed; the toggle header and chevron come from the shared .section styles. */
 
 .done-count {
   font-size: var(--text-xs);
@@ -1559,20 +1568,6 @@ button:focus-visible {
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 0 8px;
-}
-
-.done-chevron {
-  margin-left: auto;
-  color: var(--text-faint);
-  transition: transform 0.15s ease;
-}
-
-.done-section.open .done-chevron {
-  transform: rotate(180deg);
-}
-
-.done-section .done-list {
-  margin-top: 8px;
 }
 
 .done-section .task {

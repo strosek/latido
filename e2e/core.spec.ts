@@ -14,7 +14,7 @@ test("natural-language quick-add parses date, time, and priority", async ({ page
   await page.fill("#task-title", "review PRs tomorrow 9am !1");
   await page.click("#add-task");
   await expect(page.getByText("review PRs")).toBeVisible();
-  await expect(page.locator(".plan-section.deferred")).toContainText("review PRs");
+  await expect(page.locator(".section.deferred")).toContainText("review PRs");
 });
 
 test("starts, pauses, resumes, and finishes a pomodoro session", async ({ page }) => {
@@ -45,12 +45,12 @@ test("recurring task reopens into the Later list when completed", async ({ page 
   await page.click("#recur-save");
 
   // The recurring task is scheduled for tomorrow, so it lands in the Later list.
-  await expect(page.locator(".plan-section.deferred")).toContainText("Review email");
+  await expect(page.locator(".section.deferred")).toContainText("Review email");
 
   // Completing it reopens it for its next occurrence (still in Later).
-  await page.click('.plan-section.deferred .check');
-  await expect(page.locator(".plan-section.deferred")).toContainText("Review email");
-  await expect(page.locator(".plan-section.deferred .recur-badge")).toHaveCount(1);
+  await page.click('.section.deferred .check');
+  await expect(page.locator(".section.deferred")).toContainText("Review email");
+  await expect(page.locator(".section.deferred .recur-badge")).toHaveCount(1);
 });
 
 test("search filters the board", async ({ page }) => {

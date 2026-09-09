@@ -15,7 +15,6 @@ import {
 } from "./state";
 import {
   MIN,
-  formatDuration,
   formatElapsed,
   formatMs,
   phaseLabel,
@@ -129,7 +128,6 @@ function repaintTick(): void {
   const clock = document.querySelector<HTMLElement>(".clock");
   const phase = document.querySelector<HTMLElement>(".session-phase");
   const count = document.querySelector<HTMLElement>(".pomodoro-count");
-  const elapsed = document.querySelector<HTMLElement>(".elapsed");
   if (!clock) return;
 
   const config = timerConfig();
@@ -168,7 +166,6 @@ function repaintTick(): void {
   updateDocumentTitle(clockText);
   if (phase) phase.textContent = `${phaseLabel(snap.phase)} · ${techniqueLabel(session.technique)}`;
   if (count) count.textContent = `${snap.completedPomodoros} completed`;
-  if (elapsed) elapsed.textContent = `elapsed ${formatDuration(snap.elapsedMs)}`;
 
   // 0064: keep the pomodoro progress ring draining in sync with the digits.
   if (session.technique === "pomodoro") {

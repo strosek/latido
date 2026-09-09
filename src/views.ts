@@ -2,12 +2,12 @@ import {
   activeSession,
   breakState,
   descriptionHintVisible,
-  doneSectionOpen,
   filterPriority,
   filterQuadrant,
   focusMode,
   notesFor,
   openMenuTaskId,
+  openSections,
   quickRun,
   resumeHintVisible,
   searchQuery,
@@ -47,6 +47,7 @@ import {
   techniqueLabel,
 } from "./timer";
 import { isFutureOpen, isOverdueOpen, isTodayOpen } from "./tasks";
+import type { SectionKey } from "./state";
 import type { Quadrant, Recurrence, Session, Task } from "./types";
 import { QUADRANT_LABEL } from "./types";
 
@@ -186,7 +187,7 @@ export function render(): void {
 export function positionRowMenu(): void {
   const menu = document.querySelector<HTMLElement>("[data-menu]");
   if (!menu) return;
-  const task = menu.closest<HTMLElement>(".task");
+  const task = menu.closest<HTMLElement>(".task, .quick-item");
   const btn = task?.querySelector<HTMLElement>('[data-action="open-menu"]');
   if (!btn) return;
 
@@ -328,34 +329,76 @@ function sortedTasks(tasks: Task[]): Task[] {
   });
 }
 
-function planListHtml(title: string, items: Task[], extraClass = ""): string {
-  if (!items.length) return "";
+/** The "⋯" row menu contents for an open (not done) task. */
+function openTaskMenuHtml(task: Task): string {
   return `
-    <section class="plan-section ${extraClass}">
-      <h2 class="quick-title">${title}</h2>
-      <ul class="quick-list">
-        ${items
-          .map((t) => {
-            const unplan =
-              extraClass === "deferred"
-                ? `<button class="icon-btn" data-action="today" data-id="${t.id}" title="Bring to today" aria-label="Bring to today">${icon("calendar")}</button>`
-                : `<button class="icon-btn" data-action="today" data-id="${t.id}" title="Remove from today" aria-label="Remove from today">${icon("x")}</button>`;
-            const date =
-              extraClass === "deferred"
-                ? `<span class="later-date">${formatDue(t.plannedFor!)}</span>`
-                : "";
-            return `
-              <li class="quick-item">
-                <button class="check" data-action="toggle" data-id="${t.id}" aria-label="Toggle done" aria-pressed="${t.done ? "true" : "false"}"></button>
-                ${date}
-                <span class="task-title">${escapeHtml(t.title)}${recurrenceBadgeHtml(t.recurrence)}</span>
-                ${unplan}
-                <button class="primary icon-btn" data-action="start" data-id="${t.id}" title="Start session" aria-label="Start session">${icon("play")}</button>
-              </li>`;
-          })
-          .join("")}
-      </ul>
+    <button data-action="today" data-id="${task.id}">${isTodayOpen(task) ? "Unplan today" : "Plan today"}</button>
+    <button data-action="defer" data-id="${task.id}">Defer…</button>
+    <button data-action="repeats" data-id="${task.id}">${task.recurrence ? `Repeats: ${recurrenceLabel(task.recurrence)}` : "Repeat…"}</button>
+    <button data-action="edit" data-id="${task.id}">Edit</button>
+    <button data-action="task-history" data-id="${task.id}">History</button>
+    <button data-action="delete" data-id="${task.id}">Delete</button>`;
+}
+
+/** The "⋯" trigger plus its open popup menu, for compact quick/today rows. */
+function moreActionsHtml(task: Task): string {
+  return `
+    <button class="icon-btn" data-action="open-menu" data-id="${task.id}" title="More actions" aria-label="More actions">${icon("dots")}</button>
+    ${openMenuTaskId === task.id ? `<div class="row-menu" data-menu>${openTaskMenuHtml(task)}</div>` : ""}`;
+}
+
+/** Quadrant + priority badges, shared by main rows and compact rows. */
+function quadrantPriorityHtml(task: Task): string {
+  return `
+    <span class="quadrant ${task.quadrant}">${QUADRANT_LABEL[task.quadrant]}</span>
+    ${priorityLabel(task.priority)}`;
+}
+
+/** 0079: a collapsible board section card — toggle header + body. */
+function sectionCardHtml(
+  key: SectionKey,
+  titleHtml: string,
+  bodyHtml: string,
+  opts: { extraClass?: string; bodyClass?: string } = {},
+): string {
+  const { extraClass = "", bodyClass = "" } = opts;
+  const isOpen = openSections[key];
+  const bodyId = `section-${key}-body`;
+  return `
+    <section class="section ${extraClass} ${isOpen ? "open" : ""}">
+      <button class="section-toggle" data-action="toggle-section" data-section="${key}" aria-expanded="${isOpen ? "true" : "false"}" aria-controls="${bodyId}">
+        <span class="section-title">${titleHtml}</span>
+        <span class="section-chevron">${icon("chevron")}</span>
+      </button>
+      ${isOpen ? `<div class="section-body ${bodyClass}" id="${bodyId}">${bodyHtml}</div>` : ""}
     </section>`;
+}
+
+function planListHtml(key: SectionKey, title: string, items: Task[], extraClass = ""): string {
+  if (!items.length) return "";
+  const rows = items
+    .map((t) => {
+      const unplan =
+        extraClass === "deferred"
+          ? `<button class="icon-btn" data-action="today" data-id="${t.id}" title="Bring to today" aria-label="Bring to today">${icon("calendar")}</button>`
+          : `<button class="icon-btn" data-action="today" data-id="${t.id}" title="Remove from today" aria-label="Remove from today">${icon("x")}</button>`;
+      const date =
+        extraClass === "deferred"
+          ? `<span class="later-date">${formatDue(t.plannedFor!)}</span>`
+          : "";
+      return `
+        <li class="quick-item">
+          <button class="check" data-action="toggle" data-id="${t.id}" aria-label="Toggle done" aria-pressed="${t.done ? "true" : "false"}"></button>
+          ${date}
+          <span class="task-title">${escapeHtml(t.title)}${recurrenceBadgeHtml(t.recurrence)}</span>
+          <span class="task-meta">${quadrantPriorityHtml(t)}</span>
+          ${unplan}
+          ${extraClass !== "deferred" ? moreActionsHtml(t) : ""}
+          <button class="primary icon-btn" data-action="start" data-id="${t.id}" title="Start session" aria-label="Start session">${icon("play")}</button>
+        </li>`;
+    })
+    .join("");
+  return sectionCardHtml(key, title, `<ul class="quick-list">${rows}</ul>`, { extraClass });
 }
 
 /* ------------------------------------------------------------------ */
@@ -508,14 +551,7 @@ function renderBoard(): void {
                   <button data-action="edit" data-id="${task.id}">Edit</button>
                   <button data-action="task-history" data-id="${task.id}">History</button>
                   <button data-action="delete" data-id="${task.id}">Delete</button>`
-      : `
-                  <button data-action="today" data-id="${task.id}">${isTodayOpen(task) ? "Unplan today" : "Plan today"}</button>
-                  <button data-action="defer" data-id="${task.id}">Defer…</button>
-                  <button data-action="repeats" data-id="${task.id}">${task.recurrence ? `Repeats: ${recurrenceLabel(task.recurrence)}` : "Repeat…"}</button>
-                  ${moveButtons}
-                  <button data-action="edit" data-id="${task.id}">Edit</button>
-                  <button data-action="task-history" data-id="${task.id}">History</button>
-                  <button data-action="delete" data-id="${task.id}">Delete</button>`;
+      : `${openTaskMenuHtml(task)}${moveButtons}`;
 
     // The start button is always visible so it's obvious where to begin work.
     const startButton = opts.done
@@ -535,8 +571,7 @@ function renderBoard(): void {
         <div class="task-body">
           <span class="task-title">${escapeHtml(task.title)}${recurrenceBadgeHtml(task.recurrence)}${isOverdueOpen(task) ? `<span class="overdue-badge">overdue</span>` : ""}</span>
           <span class="task-meta">
-            <span class="quadrant ${task.quadrant}">${QUADRANT_LABEL[task.quadrant]}</span>
-            ${priorityLabel(task.priority)}
+            ${quadrantPriorityHtml(task)}
             ${
               (task.tags ?? []).length
                 ? `<span class="tag-chips">${(task.tags ?? [])
@@ -552,12 +587,12 @@ function renderBoard(): void {
           </span>
         </div>
         ${bits.length ? `<span class="task-stats">${bits.join(" · ")}</span>` : ""}
-        ${startButton}
         <div class="task-actions">
           ${quickButton}
           <button class="icon-btn" data-action="open-menu" data-id="${task.id}" title="More actions" aria-label="More actions">${icon("dots")}</button>
           ${openMenuTaskId === task.id ? `<div class="row-menu" data-menu>${menuHtml}</div>` : ""}
         </div>
+        ${startButton}
       </li>`;
   };
 
@@ -565,35 +600,35 @@ function renderBoard(): void {
   const doneRows = doneTasks.map((task) => rowFor(task, { done: true })).join("");
 
   const quickSection = quickTasks.length
-    ? `<section class="quick-section">
-        <h2 class="quick-title">Quick tasks</h2>
-        <ul class="quick-list">
+    ? sectionCardHtml(
+        "quick",
+        "Quick tasks",
+        `<ul class="quick-list">
           ${quickTasks
             .map(
               (t) => `
             <li class="quick-item">
               <button class="check" data-action="toggle" data-id="${t.id}" aria-label="Toggle done" aria-pressed="${t.done ? "true" : "false"}"></button>
-              <span class="task-title">${escapeHtml(t.title)}</span>
+              <span class="task-title">${escapeHtml(t.title)}${recurrenceBadgeHtml(t.recurrence)}</span>
+              <span class="task-meta">${quadrantPriorityHtml(t)}</span>
               <button class="icon-btn" data-action="toggle-quick" data-id="${t.id}" title="Unmark as quick" aria-label="Unmark as quick" aria-pressed="true">${icon("bolt")}</button>
+              ${moreActionsHtml(t)}
               <button class="primary" data-action="quick-run" data-id="${t.id}">Run</button>
             </li>`,
             )
             .join("")}
-        </ul>
-      </section>`
+        </ul>`,
+      )
     : "";
 
-  // 0075: folded "Completed" section — one compact header row until expanded.
+  // 0075: the "Completed" card is the one section that starts collapsed.
   const doneSection = doneTasks.length
-    ? `
-    <section class="done-section ${doneSectionOpen ? "open" : ""}">
-      <button class="done-toggle" data-action="toggle-done-section" aria-expanded="${doneSectionOpen ? "true" : "false"}" aria-controls="done-list">
-        <span class="done-title">Completed</span>
-        <span class="done-count">${doneTasks.length}</span>
-        <span class="done-chevron">${icon("chevron")}</span>
-      </button>
-      ${doneSectionOpen ? `<ul id="done-list" class="task-list done-list">${doneRows}</ul>` : ""}
-    </section>`
+    ? sectionCardHtml(
+        "done",
+        `<span>Completed</span><span class="done-count">${doneTasks.length}</span>`,
+        `<ul id="done-list" class="task-list done-list">${doneRows}</ul>`,
+        { extraClass: "done-section", bodyClass: "done-body" },
+      )
     : "";
 
   const hasFilters =
@@ -689,13 +724,16 @@ function renderBoard(): void {
 
     ${state.tasks.length ? boardControlsHtml() : ""}
 
-    ${planListHtml("Today", todayOpen)}
+    ${planListHtml("today", "Today", todayOpen)}
 
-    <main class="board">
-      ${mainTasks.length === 0 ? emptyHtml : `<ul class="task-list">${rows}</ul>`}
-    </main>
+    ${sectionCardHtml(
+      "open",
+      "Open",
+      mainTasks.length === 0 ? emptyHtml : `<ul class="task-list">${rows}</ul>`,
+      { extraClass: "open-section" },
+    )}
 
-    ${planListHtml("Later", laterOpen, "deferred")}
+    ${planListHtml("later", "Later", laterOpen, "deferred")}
     ${quickSection}
     ${doneSection}
     <p class="shortcut-hint"><span class="hint-text"><strong>N</strong> new task · <strong>/</strong> search · <strong>?</strong> shortcuts · <strong>Esc</strong> close menus</span>${koFiHtml()}</p>`,
@@ -1020,6 +1058,7 @@ function renderSession(session: Session): void {
   const task = taskById(session.taskId);
   const snap = snapshot(session, timerConfig());
   const title = escapeHtml(task?.title ?? "Untitled task");
+  const markDoneLabel = task?.done ? "Unmark done" : "Mark done";
   const clockText =
     session.technique === "pomodoro" ? formatMs(snap.remainingMs) : formatElapsed(snap.elapsedMs);
   // 0054: slightly emphasize the count-up past the gentle-reminder limit.
@@ -1062,6 +1101,7 @@ function renderSession(session: Session): void {
         </header>
         ${clockHtml}
         ${countBit}
+        <button class="ghost" data-action="mark-done" data-id="${session.taskId}">${markDoneLabel}</button>
         <button class="ghost focus-exit" data-action="toggle-focus">Exit focus · Esc</button>
       </main>`,
     );
@@ -1108,7 +1148,7 @@ function renderSession(session: Session): void {
       ${descBlock}
       ${hintBlock}
       ${clockHtml}
-      ${session.technique === "pomodoro" ? `<div class="pomodoro-count">${snap.completedPomodoros} completed</div>` : `<div class="elapsed">elapsed ${formatDuration(snap.elapsedMs)}</div>`}
+      ${session.technique === "pomodoro" ? `<div class="pomodoro-count">${snap.completedPomodoros} completed</div>` : ""}
 
       <div class="session-controls">
         ${
@@ -1117,6 +1157,7 @@ function renderSession(session: Session): void {
             : `<button class="ghost" data-action="resume">${icon("play")} Resume</button>`
         }
         <button class="ghost" data-action="toggle-focus">${icon("target")} Focus</button>
+        <button class="ghost" data-action="mark-done" data-id="${session.taskId}">${markDoneLabel}</button>
         <button class="primary" data-action="finish">${icon("check")} Finish</button>
       </div>
 

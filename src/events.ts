@@ -197,7 +197,7 @@ app.addEventListener("click", (e) => {
     setOpenMenuTaskId(null);
   }
 
-  handleAction(target.dataset.action, target.dataset.id, target.dataset.dir);
+  handleAction(target.dataset.action, target.dataset.id, target.dataset.dir, target.dataset.section);
 });
 
 app.addEventListener("input", (e) => {

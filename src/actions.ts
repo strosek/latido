@@ -15,15 +15,15 @@ import {
   activeSession,
   applyTheme,
   breakState,
-  doneSectionOpen,
   focusMode,
   lastFinished,
   openMenuTaskId,
+  openSections,
   persist,
   quickRun,
+  SECTION_DEFAULTS,
   setBreakState,
   setDescriptionHintVisible,
-  setDoneSectionOpen,
   setFilterPriority,
   setFilterQuadrant,
   setFocusMode,
@@ -35,6 +35,7 @@ import {
   setQuickRun,
   setResumeHintVisible,
   setSearchQuery,
+  setSectionOpen,
   setSettings,
   setState,
   setSubView,
@@ -57,6 +58,7 @@ import {
 import { doneSessions, sessionWorkMs, taskTotals } from "./stats";
 import { isTodayOpen } from "./tasks";
 import { MIN, formatDuration, snapshot, techniqueLabel } from "./timer";
+import type { SectionKey } from "./state";
 import type { Quadrant, Recurrence, Session, Settings, Task, Technique } from "./types";
 import { QUADRANT_LABEL, newId } from "./types";
 import { notify, requestPermission } from "./notify";
@@ -274,6 +276,40 @@ function toggleTask(id: string): void {
   task.doneAt = null;
   persist();
   render();
+}
+
+/** Mark the session's task done and finish the running session in one go. */
+function markDoneAndFinish(id: string): void {
+  const task = taskById(id);
+  if (!task) return;
+  const session = activeSession();
+
+  // A task already done is just toggled back open, without touching the session.
+  if (task.done) {
+    task.done = false;
+    task.doneAt = null;
+    persist();
+    render();
+    return;
+  }
+
+  // 0043/0063: completing a recurring task reopens it for its next occurrence.
+  if (task.recurrence) {
+    const prev = task.plannedFor;
+    const completion = { completedAt: Date.now(), plannedFor: prev };
+    task.completions.push(completion);
+    task.plannedFor = nextDueDate(task.recurrence, completion.completedAt);
+  } else {
+    task.done = true;
+    task.doneAt = Date.now();
+  }
+
+  if (session && session.status !== "done") {
+    finishSession(session);
+  } else {
+    persist();
+    render();
+  }
 }
 
 function toggleQuick(id: string): void {
@@ -1318,7 +1354,9 @@ function resetTransientState(): void {
   setLastWatch(null);
   setLastFinished(null);
   setOpenMenuTaskId(null);
-  setDoneSectionOpen(false);
+  for (const key of Object.keys(SECTION_DEFAULTS) as SectionKey[]) {
+    setSectionOpen(key, SECTION_DEFAULTS[key]);
+  }
   setHiddenAt(null);
   setHiddenSessionId(null);
   stopRepaint();
@@ -1913,6 +1951,7 @@ export function handleAction(
   action: string | undefined,
   id: string | undefined,
   dir?: string,
+  section?: string,
 ): void {
   const session = activeSession();
 
@@ -1959,6 +1998,9 @@ export function handleAction(
       break;
     case "start":
       if (id) promptStartSession(id);
+      break;
+    case "mark-done":
+      if (id) markDoneAndFinish(id);
       break;
     case "edit":
       if (id) openEditTask(id);
@@ -2023,9 +2065,12 @@ export function handleAction(
       setFilterQuadrant(null);
       render();
       break;
-    case "toggle-done-section":
-      setDoneSectionOpen(!doneSectionOpen);
-      render();
+    case "toggle-section":
+      if (section) {
+        const key = section as SectionKey;
+        setSectionOpen(key, !openSections[key]);
+        render();
+      }
       break;
     case "toggle-focus":
       setFocusMode(!focusMode);
