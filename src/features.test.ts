@@ -229,6 +229,61 @@ describe("flowtime vs pomodoro explainer (0077)", () => {
   });
 });
 
+describe("add-and-focus (0080)", () => {
+  it("adds the typed task and opens the session chooser in one click", async () => {
+    const { state } = await import("./state");
+    const input = document.querySelector<HTMLInputElement>("#task-title")!;
+    input.value = "Deep work";
+    document
+      .getElementById("add-and-focus")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(state.tasks).toHaveLength(1);
+    expect(state.tasks[0].title).toBe("Deep work");
+    const overlay = document.querySelector<HTMLElement>(".overlay")!;
+    expect(overlay.textContent).toContain("Start a session");
+    expect(overlay.textContent).toContain("Deep work");
+    expect(overlay.querySelector('[data-tech="flowtime"]')).not.toBeNull();
+    overlay.remove();
+  });
+
+  it("does nothing when the input is empty", async () => {
+    const { state } = await import("./state");
+    document
+      .getElementById("add-and-focus")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(state.tasks).toHaveLength(0);
+    expect(document.querySelector(".overlay")).toBeNull();
+  });
+});
+
+describe("estimate cap (0013)", () => {
+  it("clamps the estimate input to 300 minutes", async () => {
+    const { state } = await import("./state");
+    const { setEstimate } = await import("./actions");
+    addTask("Estimate me");
+    const taskId = state.tasks[0].id;
+
+    setEstimate(taskId, "450");
+    expect(state.tasks[0].estimatedMin).toBe(300);
+    setEstimate(taskId, "42");
+    expect(state.tasks[0].estimatedMin).toBe(42);
+    setEstimate(taskId, "");
+    expect(state.tasks[0].estimatedMin).toBeNull();
+  });
+
+  it("renders the placeholder text and max cap on the row input", async () => {
+    const { setSettings } = await import("./state");
+    const { DEFAULT_SETTINGS } = await import("./types");
+    setSettings({ ...DEFAULT_SETTINGS, showEstimates: true });
+    addTask("Estimate me");
+    const input = document.querySelector<HTMLInputElement>(".task .est-input")!;
+    expect(input.placeholder).toBe("estimate (min)");
+    expect(input.max).toBe("300");
+  });
+});
+
 describe("rest guide (0078)", () => {
   it("shows the Learn control on the running break and opens the guide", async () => {
     const { setBreakState } = await import("./state");
@@ -409,6 +464,209 @@ describe("mark done from session view", () => {
     expect(state.tasks.find((t) => t.id === taskId)!.done).toBe(true);
     expect(state.activeSessionId).toBeNull();
     expect(state.sessions.find((s) => s.taskId === taskId)!.status).toBe("done");
+  });
+});
+
+describe("cancel session", () => {
+  const startFlowtime = async (): Promise<string> => {
+    const { state } = await import("./state");
+    addTask("Write report");
+    const taskId = state.tasks[0].id;
+    document
+      .querySelector<HTMLElement>(".task-start [data-action='start']")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    document
+      .querySelector<HTMLElement>('[data-tech="flowtime"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return taskId;
+  };
+
+  it("cancels the session without recording it and restores it on undo", async () => {
+    const { state } = await import("./state");
+    const taskId = await startFlowtime();
+    const before = state.sessions.length;
+    expect(state.activeSessionId).not.toBeNull();
+
+    document
+      .querySelector<HTMLElement>('[data-action="cancel-session"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(state.activeSessionId).toBeNull();
+    expect(state.sessions).toHaveLength(before - 1);
+    expect(state.tasks.find((t) => t.id === taskId)!.done).toBe(false);
+    expect(document.querySelector("#undo-action")).not.toBeNull();
+
+    document
+      .querySelector<HTMLElement>("#undo-action")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(state.sessions).toHaveLength(before);
+    expect(state.activeSessionId).not.toBeNull();
+  });
+});
+
+describe("in-session quick add (0082)", () => {
+  const startFlowtime = async (): Promise<string> => {
+    const { state } = await import("./state");
+    addTask("Write report");
+    const taskId = state.tasks[0].id;
+    document
+      .querySelector<HTMLElement>(".task-start [data-action='start']")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    document
+      .querySelector<HTMLElement>('[data-tech="flowtime"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return taskId;
+  };
+
+  it("captures a thought into the board without leaving the session", async () => {
+    const { state } = await import("./state");
+    await startFlowtime();
+    expect(document.querySelector(".clock")).not.toBeNull();
+
+    const input = document.querySelector<HTMLInputElement>("#capture-thought")!;
+    expect(input).not.toBeNull();
+    const captureSection = input.closest<HTMLElement>(".capture-section")!;
+    expect(captureSection.textContent).toContain("Remembered something you need to do?");
+    input.value = "Buy milk #errands !1";
+    document
+      .querySelector<HTMLFormElement>("#capture-form")!
+      .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    expect(state.tasks).toHaveLength(2);
+    const captured = state.tasks[1];
+    expect(captured.title).toBe("Buy milk");
+    expect(captured.tags).toEqual(["errands"]);
+    expect(captured.priority).toBe(1);
+    expect(captured.quadrant).toBe("q2");
+    // The session is untouched and still on screen.
+    expect(state.activeSessionId).not.toBeNull();
+    expect(document.querySelector(".clock")).not.toBeNull();
+    expect(document.querySelector("#capture-confirm")!.classList.contains("visible")).toBe(true);
+  });
+
+  it("focuses each capture field via keyboard shortcuts", async () => {
+    const { setSettings } = await import("./state");
+    const { DEFAULT_SETTINGS } = await import("./types");
+    setSettings({ ...DEFAULT_SETTINGS, distractionLogEnabled: true });
+    await startFlowtime();
+
+    const note = document.querySelector<HTMLInputElement>("#note-text")!;
+    const task = document.querySelector<HTMLInputElement>("#capture-thought")!;
+    const dist = document.querySelector<HTMLInputElement>("#distraction-text")!;
+    expect(note).not.toBeNull();
+    expect(task).not.toBeNull();
+    expect(dist).not.toBeNull();
+
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "t", bubbles: true }));
+    expect(document.activeElement).toBe(task);
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "m", bubbles: true }));
+    expect(document.activeElement).toBe(note);
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "g", bubbles: true }));
+    expect(document.activeElement).toBe(dist);
+  });
+
+  it("toggles focus mode from the corner toggle", async () => {
+    await startFlowtime();
+    const toggle = document.querySelector<HTMLElement>(
+      '[data-action="toggle-focus"].corner-toggle',
+    )!;
+    expect(toggle).not.toBeNull();
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+
+    toggle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(document.querySelector(".session-main.focus")).not.toBeNull();
+    const onToggle = document.querySelector<HTMLElement>(
+      '[data-action="toggle-focus"].corner-toggle',
+    )!;
+    expect(onToggle.getAttribute("aria-pressed")).toBe("true");
+  });
+});
+
+describe("distraction log (0081)", () => {
+  const startFlowtime = async (): Promise<string> => {
+    const { state } = await import("./state");
+    addTask("Write report");
+    const taskId = state.tasks[0].id;
+    document
+      .querySelector<HTMLElement>(".task-start [data-action='start']")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    document
+      .querySelector<HTMLElement>('[data-tech="flowtime"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return taskId;
+  };
+
+  it("hides the control until the setting is enabled", async () => {
+    const { state } = await import("./state");
+    await startFlowtime();
+    expect(document.querySelector("#distraction-form")).toBeNull();
+    expect(state.distractions).toEqual([]);
+  });
+
+  it("logs a distraction during a session without disturbing it", async () => {
+    const { setSettings, state } = await import("./state");
+    const { DEFAULT_SETTINGS } = await import("./types");
+    setSettings({ ...DEFAULT_SETTINGS, distractionLogEnabled: true });
+    const taskId = await startFlowtime();
+
+    const input = document.querySelector<HTMLInputElement>("#distraction-text")!;
+    expect(input).not.toBeNull();
+    const distractionSection = input.closest<HTMLElement>(".capture-section")!;
+    expect(distractionSection.textContent).toContain("Distracted? Park it here.");
+    input.value = "check the parcel code";
+    document
+      .querySelector<HTMLFormElement>("#distraction-form")!
+      .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    expect(state.distractions).toHaveLength(1);
+    expect(state.distractions[0].text).toBe("check the parcel code");
+    expect(state.distractions[0].taskId).toBe(taskId);
+    // Session untouched and still showing the clock.
+    expect(state.activeSessionId).not.toBeNull();
+    expect(document.querySelector(".clock")).not.toBeNull();
+  });
+
+  it("shows the log in history and clears it", async () => {
+    const { setSettings, state } = await import("./state");
+    const { DEFAULT_SETTINGS } = await import("./types");
+    setSettings({ ...DEFAULT_SETTINGS, distractionLogEnabled: true });
+    await startFlowtime();
+
+    document.querySelector<HTMLInputElement>("#distraction-text")!.value = "email Laura";
+    document
+      .querySelector<HTMLFormElement>("#distraction-form")!
+      .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    // Leave the session (cancel returns to the board) so history is reachable.
+    document
+      .querySelector<HTMLElement>('[data-action="cancel-session"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    document
+      .querySelector<HTMLElement>('[data-action="view-history"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    document
+      .querySelector<HTMLElement>('[data-history-tab="distractions"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(document.querySelector("#app")!.textContent).toContain("Distraction log");
+    expect(document.querySelector("#app")!.textContent).toContain("email Laura");
+
+    document
+      .querySelector<HTMLElement>('[data-action="clear-distractions"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(state.distractions).toHaveLength(0);
+  });
+
+  it("shows an empty Distractions tab with no logged entries", async () => {
+    document
+      .querySelector<HTMLElement>('[data-action="view-history"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(document.querySelector('[data-history-tab="distractions"]')).not.toBeNull();
+    document
+      .querySelector<HTMLElement>('[data-history-tab="distractions"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(document.querySelector("#app")!.textContent).toContain("Distraction log");
+    expect(document.querySelector("#app")!.textContent).toContain("Capture distractions");
   });
 });
 

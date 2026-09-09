@@ -85,6 +85,14 @@ export interface RestartNote {
   createdAt: number;
 }
 
+/** 0081: a parked distraction captured during a focus session. */
+export interface Distraction {
+  id: string;
+  text: string;
+  createdAt: number;
+  taskId: string | null; // the session's task when it was logged
+}
+
 export interface Session {
   id: string;
   taskId: string;
@@ -102,6 +110,7 @@ export interface AppState {
   tasks: Task[];
   sessions: Session[];
   notes: RestartNote[];
+  distractions: Distraction[]; // 0081: opt-in distraction log
   activeSessionId: string | null;
 }
 
@@ -118,6 +127,7 @@ export interface Settings {
   notificationsEnabled: boolean; // 0020: browser notifications on transitions
   maxFlowtimeMin: number; // 0021: cap flowtime length (0 = off)
   flowtimeNudgeMin: number; // 0054: gentle "okay to stop" reminder (0 = off)
+  distractionLogEnabled: boolean; // 0081: park distractions during sessions
   theme: Theme;
 }
 
@@ -134,6 +144,7 @@ export const DEFAULT_SETTINGS: Settings = {
   notificationsEnabled: true,
   maxFlowtimeMin: 0,
   flowtimeNudgeMin: 90,
+  distractionLogEnabled: false,
   theme: "night",
 };
 

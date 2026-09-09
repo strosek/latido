@@ -152,6 +152,7 @@ describe("configFromSettings", () => {
       notificationsEnabled: false,
       maxFlowtimeMin: 0,
       flowtimeNudgeMin: 90,
+      distractionLogEnabled: false,
       theme: "night",
     };
     expect(configFromSettings(settings)).toEqual(BASE_CONFIG);

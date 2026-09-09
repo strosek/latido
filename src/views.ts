@@ -5,6 +5,7 @@ import {
   filterPriority,
   filterQuadrant,
   focusMode,
+  historyTab,
   notesFor,
   openMenuTaskId,
   openSections,
@@ -70,11 +71,29 @@ export function updateDocumentTitle(clockText: string | null): void {
 /** 0066: view key for the last render; only a change triggers the entrance animation. */
 let lastViewKey: string | null = null;
 
+/** 0005: subtle night/day toggle pinned to the top-right corner in every view. */
+function themeToggleHtml(): string {
+  const isNight = settings.theme === "night";
+  const label = isNight ? "Switch to day mode" : "Switch to night mode";
+  return `<button class="corner-toggle" data-action="toggle-theme" title="${label}" aria-label="${label}" aria-pressed="${isNight ? "true" : "false"}">${icon(isNight ? "sun" : "moon")}</button>`;
+}
+
+/** Focus-mode toggle, shown left of the theme toggle while a session runs. */
+function focusToggleHtml(): string {
+  const session = activeSession();
+  if (!session || session.status === "done") return "";
+  const label = focusMode ? "Exit focus mode" : "Enter focus mode";
+  return `<button class="corner-toggle focus-toggle ${focusMode ? "on" : ""}" data-action="toggle-focus" title="${label}" aria-label="${label}" aria-pressed="${focusMode ? "true" : "false"}">${icon("target")}</button>`;
+}
+
 /** Replace the app root, gently animating the view in on first mount (0066). */
 function renderView(key: string, html: string): void {
   const changed = lastViewKey !== key;
   lastViewKey = key;
-  app.innerHTML = html;
+  // The theme toggle is rendered on every view so it's always available, even
+  // during a focus session, break, or quick run. The focus toggle joins it
+  // while a session is running.
+  app.innerHTML = `${html}<div class="corner-toggles">${focusToggleHtml()}${themeToggleHtml()}</div>`;
   if (changed) {
     for (const child of Array.from(app.children)) {
       child.classList.add("view-enter");
@@ -211,7 +230,6 @@ export function positionRowMenu(): void {
 }
 
 function pageHeaderHtml(): string {
-  const targetLabel = settings.theme === "night" ? "day" : "night";
   return `
     <header class="app-header">
       <div class="app-title">
@@ -222,7 +240,6 @@ function pageHeaderHtml(): string {
         </div>
       </div>
       <nav class="header-actions">
-        <button class="icon-btn" data-action="toggle-theme" title="Switch to ${targetLabel} mode" aria-label="Switch to ${targetLabel} mode" aria-pressed="${settings.theme === "night" ? "true" : "false"}">${icon(settings.theme === "night" ? "sun" : "moon")}</button>
         <button class="icon-btn" data-action="view-dashboard" title="Dashboard" aria-label="Dashboard">${icon("dashboard")}</button>
         <button class="icon-btn" data-action="view-history" title="History" aria-label="History">${icon("history")}</button>
         <button class="icon-btn" data-action="open-settings" title="Settings" aria-label="Settings">${icon("settings")}</button>
@@ -581,7 +598,7 @@ function renderBoard(): void {
             }
             ${
               settings.showEstimates
-                ? `<input type="number" class="est-input" data-estimate="${task.id}" value="${task.estimatedMin ?? ""}" min="0" placeholder="est" aria-label="Estimated minutes" />`
+                ? `<input type="number" class="est-input" data-estimate="${task.id}" value="${task.estimatedMin ?? ""}" min="0" max="300" placeholder="estimate (min)" aria-label="Estimated minutes (max 300)" />`
                 : ""
             }
           </span>
@@ -718,7 +735,10 @@ function renderBoard(): void {
         <label class="check-field">Quick
           <input type="checkbox" id="task-quick" />
         </label>
-        <button id="add-task" class="primary">Add task</button>
+        <div class="add-task-actions">
+          <button id="add-and-focus" class="ghost" title="Add the task and choose a focus session">${icon("play")} Add &amp; focus</button>
+          <button id="add-task" class="primary">Add task</button>
+        </div>
       </div>
     </section>
 
@@ -819,6 +839,58 @@ function renderHistory(taskId: string | null): void {
     ? "No sessions for this task yet. Start one to begin its history."
     : "No finished sessions yet. Your focus history will appear here.";
 
+  // 0081: the general history view gets Sessions / Distractions tabs. The
+  // distraction log aggregates entries from every task, newest first.
+  const showTabs = !taskId;
+  const distractionsSorted = [...state.distractions].sort((a, b) => b.createdAt - a.createdAt);
+
+  const distractionsRows = distractionsSorted
+    .map((d) => {
+      const when = new Date(d.createdAt).toLocaleString([], {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const during = d.taskId
+        ? `<span class="hist-sub">during ${escapeHtml(taskById(d.taskId)?.title ?? "deleted task")}</span>`
+        : "";
+      return `<li class="hist-item">
+        <div class="hist-top">
+          <span class="hist-title">${escapeHtml(d.text)}</span>
+          <span class="hist-date">${when}</span>
+        </div>
+        ${during}
+      </li>`;
+    })
+    .join("");
+
+  const distractionsTabHtml = `
+    <div class="dash-card-head">
+      <h3 class="page-title">Distraction log</h3>
+      <button class="ghost" data-action="clear-distractions" title="Delete every logged distraction">Clear log</button>
+    </div>
+    ${
+      distractionsSorted.length
+        ? `<ul class="hist-list">${distractionsRows}</ul>`
+        : emptyStateHtml("target", "Nothing here yet", "Capture distractions during sessions to see them here.")
+    }`;
+
+  const sessionsTabHtml = `
+    ${
+      sessions.length === 0
+        ? emptyStateHtml("history", "Nothing here yet", sessionsEmpty)
+        : `<ul class="hist-list">${rows}</ul>`
+    }
+    ${completionsHtml}`;
+
+  const tabsHtml = showTabs
+    ? `<div class="history-tabs" role="tablist" aria-label="History sections">
+        <button type="button" class="history-tab ${historyTab === "sessions" ? "active" : ""}" role="tab" aria-selected="${historyTab === "sessions" ? "true" : "false"}" data-history-tab="sessions">Sessions</button>
+        <button type="button" class="history-tab ${historyTab === "distractions" ? "active" : ""}" role="tab" aria-selected="${historyTab === "distractions" ? "true" : "false"}" data-history-tab="distractions">Distractions</button>
+      </div>`
+    : "";
+
   renderView(
     "history",
     `
@@ -826,12 +898,8 @@ function renderHistory(taskId: string | null): void {
     <main class="board">
       <button class="back-btn" data-action="back-to-board">${icon("back")} Back</button>
       <h2 class="page-title">${escapeHtml(title)}</h2>
-      ${
-        sessions.length === 0
-          ? emptyStateHtml("history", "Nothing here yet", sessionsEmpty)
-          : `<ul class="hist-list">${rows}</ul>`
-      }
-      ${completionsHtml}
+      ${tabsHtml}
+      ${historyTab === "distractions" ? distractionsTabHtml : sessionsTabHtml}
     </main>`,
   );
 }
@@ -1026,6 +1094,21 @@ function renderDashboard(): void {
           <h3>Focus by tag</h3>
           ${tagFocusBars ?? emptyStateHtml("dashboard", "No focus yet", "Finish a session to see focus by tag.")}
         </section>
+        ${
+          settings.distractionLogEnabled
+            ? `<section class="dash-card">
+                <div class="dash-card-head">
+                  <h3>Distractions</h3>
+                  <button class="icon-btn" data-action="view-history" title="View the distraction log" aria-label="View the distraction log">${icon("history")}</button>
+                </div>
+                ${
+                  state.distractions.length
+                    ? `<ul class="dash-stats"><li><span>Logged</span><strong>${state.distractions.length}</strong></li></ul>`
+                    : emptyStateHtml("target", "No distractions yet", "Enable the distraction log in Settings, then capture thoughts during sessions.")
+                }
+              </section>`
+            : ""
+        }
         <section class="dash-card wide">
           <div class="dash-card-head">
             <h3>Recent sessions</h3>
@@ -1052,6 +1135,38 @@ function resumeHintFor(session: Session): { notes: string[] } | null {
   if (!recent) return null;
   const notes = notesFor(recent.id).map((n) => n.text);
   return notes.length ? { notes } : null;
+}
+
+/** 0082: dump a task mid-session — a single subtle field, like the notes. */
+function captureFieldHtml(): string {
+  return `
+    <section class="capture-section">
+      <h3>Remembered something you need to do?</h3>
+      <form id="capture-form" class="capture-row">
+        <input id="capture-thought" type="text" placeholder="Dump it here… #tag" autocomplete="off" aria-label="Capture a thought and add it to your board" />
+        <button type="submit" class="ghost">Add</button>
+      </form>
+      <span id="capture-confirm" class="capture-confirm" aria-live="polite"></span>
+    </section>`;
+}
+
+/** 0081: park a distraction mid-session — same style, no dialog. */
+function distractionFieldHtml(extraClass = ""): string {
+  if (!settings.distractionLogEnabled) return "";
+  return `
+    <section class="capture-section ${extraClass}">
+      <h3>Distracted? Park it here.</h3>
+      <form id="distraction-form" class="capture-row">
+        <input id="distraction-text" type="text" placeholder="What grabbed your attention?" autocomplete="off" aria-label="Log a distraction" />
+        <button type="submit" class="ghost">Log</button>
+      </form>
+      <span id="distraction-confirm" class="capture-confirm" aria-live="polite"></span>
+    </section>`;
+}
+
+/** 0081/0082: park thoughts mid-session without leaving focus. */
+function sessionThoughtsHtml(): string {
+  return `${captureFieldHtml()}${distractionFieldHtml()}`;
 }
 
 function renderSession(session: Session): void {
@@ -1101,7 +1216,8 @@ function renderSession(session: Session): void {
         </header>
         ${clockHtml}
         ${countBit}
-        <button class="ghost" data-action="mark-done" data-id="${session.taskId}">${markDoneLabel}</button>
+        ${distractionFieldHtml("focus-capture")}
+        <button class="ghost" data-action="mark-done" data-id="${session.taskId}">${icon("check")} ${markDoneLabel}</button>
         <button class="ghost focus-exit" data-action="toggle-focus">Exit focus · Esc</button>
       </main>`,
     );
@@ -1151,21 +1267,21 @@ function renderSession(session: Session): void {
       ${session.technique === "pomodoro" ? `<div class="pomodoro-count">${snap.completedPomodoros} completed</div>` : ""}
 
       <div class="session-controls">
+        <button class="ghost" data-action="cancel-session" title="Cancel this session — nothing is recorded">${icon("x")} Cancel</button>
         ${
           session.status === "running"
             ? `<button class="ghost" data-action="pause">${icon("pause")} Pause</button>`
             : `<button class="ghost" data-action="resume">${icon("play")} Resume</button>`
         }
-        <button class="ghost" data-action="toggle-focus">${icon("target")} Focus</button>
-        <button class="ghost" data-action="mark-done" data-id="${session.taskId}">${markDoneLabel}</button>
-        <button class="primary" data-action="finish">${icon("check")} Finish</button>
+        <button class="ghost" data-action="mark-done" data-id="${session.taskId}">${icon("check")} ${markDoneLabel}</button>
+        <button class="primary" data-action="finish">${icon("stop")} Finish</button>
       </div>
 
-      <section class="notes">
+      <section class="capture-section">
         <h3>Notes for restarting later</h3>
-        <form id="note-form">
-          <textarea id="note-text" placeholder="What should you remember when you come back?" rows="3"></textarea>
-          <button type="submit" class="primary">Add note</button>
+        <form id="note-form" class="capture-row">
+          <input id="note-text" type="text" placeholder="What should you remember when you come back?" autocomplete="off" aria-label="Add a note for restarting later" />
+          <button type="submit" class="ghost">Add</button>
         </form>
         ${
           notes.length
@@ -1175,8 +1291,10 @@ function renderSession(session: Session): void {
             : ""
         }
       </section>
+
+      ${sessionThoughtsHtml()}
     </main>
-    <p class="shortcut-hint"><span class="hint-text"><strong>Space</strong> pause/resume · <strong>F</strong> finish · <strong>?</strong> shortcuts</span>${koFiHtml()}</p>`,
+    <p class="shortcut-hint"><span class="hint-text"><strong>Space</strong> pause/resume · <strong>F</strong> finish · <strong>T</strong> task · <strong>M</strong> note · <strong>G</strong> distraction · <strong>?</strong> shortcuts</span>${koFiHtml()}</p>`,
   );
 }
 
@@ -1243,6 +1361,7 @@ function renderQuickRun(): void {
         <button class="primary" data-action="quick-next">Close & next</button>
         <button class="ghost" data-action="quick-finish">Finish run</button>
       </div>
+      ${sessionThoughtsHtml()}
     </main>
     <p class="shortcut-hint"><span class="hint-text"><strong>F</strong> finish run</span>${koFiHtml()}</p>`,
   );

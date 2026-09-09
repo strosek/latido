@@ -164,6 +164,15 @@ function currentWeekday(): number {
 /* ------------------------------------------------------------------ */
 
 export function addTask(): void {
+  addTaskFromInput(false);
+}
+
+/** 0080: add the typed task and jump straight into the focus-session chooser. */
+export function addTaskAndFocus(): void {
+  addTaskFromInput(true);
+}
+
+function addTaskFromInput(startFocus: boolean): void {
   const titleInput = document.querySelector<HTMLInputElement>("#task-title");
   const priorityInput = document.querySelector<HTMLSelectElement>("#task-priority");
   const quadrantInput = document.querySelector<HTMLSelectElement>("#task-quadrant");
@@ -173,15 +182,43 @@ export function addTask(): void {
   const rawTitle = titleInput.value.trim();
   if (!rawTitle) return;
 
+  buildAndAddTask(
+    rawTitle,
+    {
+      priority: Number(priorityInput.value),
+      quadrant: quadrantInput.value as Quadrant,
+      quick: quickInput?.checked ?? false,
+    },
+    (task) => {
+      titleInput.value = "";
+      // 0071: clear the live parsing chips once the task is created.
+      const chips = document.getElementById("add-parse-feedback");
+      if (chips) chips.innerHTML = "";
+      if (startFocus) promptStartSession(task.id);
+    },
+  );
+}
+
+/**
+ * Parse and add a task from any text field, reusing the board's natural-language
+ * parsing and its duplicate guard. Defaults (priority/quadrant/quick) are only
+ * used when the text doesn't specify them. `onCreated` runs after the task is
+ * persisted and rendered.
+ */
+function buildAndAddTask(
+  rawTitle: string,
+  defaults: { priority?: number; quadrant?: Quadrant; quick?: boolean },
+  onCreated?: (task: Task) => void,
+): void {
   const parsed = parseQuickAdd(rawTitle);
   const cleanTitle = stripTags(parsed.clean || rawTitle) || rawTitle;
-  const priority = parsed.priority ?? Number(priorityInput.value);
-  const quadrant = quadrantInput.value as Quadrant;
-  const quick = quickInput?.checked ?? false;
+  const priority = parsed.priority ?? defaults.priority ?? 2;
+  const quadrant = defaults.quadrant ?? "q2";
+  const quick = defaults.quick ?? false;
   const plannedFor = plannedForFrom(parsed.dueDay, parsed.timeMin);
 
   const create = (): void => {
-    state.tasks.push({
+    const task: Task = {
       id: newId(),
       title: cleanTitle,
       priority,
@@ -197,13 +234,11 @@ export function addTask(): void {
       recurrence: null,
       order: nextManualOrder(),
       completions: [],
-    });
-    titleInput.value = "";
-    // 0071: clear the live parsing chips once the task is created.
-    const chips = document.getElementById("add-parse-feedback");
-    if (chips) chips.innerHTML = "";
+    };
+    state.tasks.push(task);
     persist();
     render();
+    onCreated?.(task);
   };
 
   // 0052: warn about duplicate open tasks.
@@ -226,6 +261,22 @@ export function addTask(): void {
     return;
   }
   create();
+}
+
+/** 0082: add a task typed on the session screen without leaving the session. */
+export function addSessionTask(): void {
+  const input = document.querySelector<HTMLInputElement>("#capture-thought");
+  if (!input) return;
+  const raw = input.value.trim();
+  if (!raw) return;
+  buildAndAddTask(raw, { priority: 2, quadrant: "q2", quick: false }, () => {
+    const confirmEl = document.getElementById("capture-confirm");
+    if (confirmEl) {
+      confirmEl.textContent = "Captured — added to your board";
+      confirmEl.classList.add("visible");
+      window.setTimeout(() => confirmEl.classList.remove("visible"), 2200);
+    }
+  });
 }
 
 function toggleTask(id: string): void {
@@ -623,7 +674,8 @@ export function setEstimate(id: string, value: string): void {
   if (!task) return;
   const raw = value.trim();
   const n = raw === "" ? null : Number(raw);
-  task.estimatedMin = n != null && Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+  task.estimatedMin =
+    n != null && Number.isFinite(n) && n > 0 ? Math.min(300, Math.round(n)) : null;
   persist();
   render();
 }
@@ -662,7 +714,7 @@ function openEditTask(id: string): void {
           settings.showEstimates
             ? `<label class="field">
                 <span>Estimate (min)</span>
-                <input type="number" id="edit-estimate" min="0" value="${task.estimatedMin ?? ""}" />
+                <input type="number" id="edit-estimate" min="0" max="300" value="${task.estimatedMin ?? ""}" />
               </label>`
             : ""
         }
@@ -765,7 +817,8 @@ function openEditTask(id: string): void {
       Math.max(1, Number(overlay.querySelector<HTMLSelectElement>("#edit-priority")!.value)),
     );
     task.quadrant = overlay.querySelector<HTMLSelectElement>("#edit-quadrant")!.value as Quadrant;
-    task.estimatedMin = est != null && Number.isFinite(est) && est > 0 ? Math.round(est) : null;
+    task.estimatedMin =
+      est != null && Number.isFinite(est) && est > 0 ? Math.min(300, Math.round(est)) : null;
     task.quick = overlay.querySelector<HTMLInputElement>("#edit-quick")?.checked ?? false;
     task.tags = parseTags(`${titleField} ${tagsField}`);
     task.description = overlay.querySelector<HTMLTextAreaElement>("#edit-desc")!.value;
@@ -821,6 +874,7 @@ function openAboutModal(): void {
         <li><strong>J</strong>/<strong>K</strong> move between tasks</li>
         <li><strong>Space</strong> pause/resume</li>
         <li><strong>F</strong> finish</li>
+        <li><strong>T</strong> task · <strong>M</strong> note · <strong>G</strong> distraction (in session)</li>
         <li><strong>?</strong> shortcuts</li>
         <li><strong>Esc</strong> close / exit</li>
       </ul>
@@ -843,6 +897,7 @@ function openShortcutsCheat(): void {
       <li><strong>J</strong> / <strong>K</strong> move between tasks</li>
       <li><strong>Space</strong> pause / resume</li>
       <li><strong>F</strong> finish</li>
+      <li><strong>T</strong> task · <strong>M</strong> note · <strong>G</strong> distraction (in session)</li>
       <li><strong>?</strong> this list</li>
       <li><strong>Esc</strong> close / exit</li>
     </ul>
@@ -918,6 +973,11 @@ function openSettings(): void {
           <label class="field check-field">
             <span>Browser notifications</span>
             <input type="checkbox" id="set-notifications" ${settings.notificationsEnabled ? "checked" : ""} />
+          </label>
+          <label class="field check-field">
+            <span>Distraction log</span>
+            <input type="checkbox" id="set-distractions" ${settings.distractionLogEnabled ? "checked" : ""} />
+            <span class="field-hint">Park distractions during sessions.</span>
           </label>
         </div>
       </div>
@@ -1047,6 +1107,8 @@ function openSettings(): void {
       autoBreak: overlay.querySelector<HTMLInputElement>("#set-auto-break")?.checked ?? true,
       showEstimates: overlay.querySelector<HTMLInputElement>("#set-estimates")?.checked ?? true,
       notificationsEnabled,
+      distractionLogEnabled:
+        overlay.querySelector<HTMLInputElement>("#set-distractions")?.checked ?? false,
     });
     saveSettings(settings);
     overlay.remove();
@@ -1518,6 +1580,38 @@ function openRestGuide(): void {
   overlay.querySelector("#rest-guide-ok")!.addEventListener("click", () => overlay.remove());
 }
 
+/** 0081: log a distraction from the inline session field (no dialog). */
+export function logDistraction(): void {
+  const input = document.querySelector<HTMLInputElement>("#distraction-text");
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  const session = activeSession();
+  state.distractions.push({
+    id: newId(),
+    text,
+    createdAt: Date.now(),
+    taskId: session?.taskId ?? null,
+  });
+  persist();
+  render();
+  const confirmEl = document.getElementById("distraction-confirm");
+  if (confirmEl) {
+    confirmEl.textContent = "Logged — parked for later";
+    confirmEl.classList.add("visible");
+    window.setTimeout(() => confirmEl.classList.remove("visible"), 2200);
+  }
+  announce("Distraction logged");
+}
+
+/** 0081: clear the distraction log from the History view. */
+function clearDistractions(): void {
+  state.distractions = [];
+  persist();
+  render();
+  announce("Distraction log cleared");
+}
+
 export function pauseSession(session: Session): void {
   if (session.status !== "running") return;
   session.pausedAt = Date.now();
@@ -1535,6 +1629,28 @@ export function resumeSession(session: Session): void {
   session.status = "running";
   persist();
   render();
+}
+
+/** Abort a running/paused session without recording it as finished work. */
+export function cancelSession(session: Session): void {
+  const id = session.id;
+  state.sessions = state.sessions.filter((s) => s.id !== id);
+  state.activeSessionId = null;
+  setLastWatch(null);
+  setFocusMode(false);
+  setHiddenAt(null);
+  setHiddenSessionId(null);
+  persist();
+  stopRepaint();
+  render();
+  announce("Session cancelled");
+  showUndoToast("Session cancelled", () => {
+    state.sessions.push(session);
+    state.activeSessionId = session.id;
+    if (session.status === "running") startRepaint();
+    persist();
+    render();
+  });
 }
 
 export function beginFocusFromBreak(): void {
@@ -2090,6 +2206,9 @@ export function handleAction(
     case "rest-guide":
       openRestGuide();
       break;
+    case "clear-distractions":
+      clearDistractions();
+      break;
     case "skip-break":
     case "end-break":
       skipBreak();
@@ -2102,6 +2221,9 @@ export function handleAction(
       break;
     case "finish":
       if (session) finishSession(session);
+      break;
+    case "cancel-session":
+      if (session) cancelSession(session);
       break;
   }
 }

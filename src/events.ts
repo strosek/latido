@@ -1,10 +1,13 @@
 import {
   addNote,
+  addSessionTask,
   addTask,
+  addTaskAndFocus,
   beginFocusFromBreak,
   finishQuick,
   finishSession,
   handleAction,
+  logDistraction,
   pauseSession,
   reorderTasks,
   resumeSession,
@@ -26,6 +29,7 @@ import {
   setFocusMode,
   setHiddenAt,
   setHiddenSessionId,
+  setHistoryTab,
   setOpenMenuTaskId,
   setSearchQuery,
   setSortBy,
@@ -107,6 +111,20 @@ function handleShortcut(e: KeyboardEvent): void {
     }
     return;
   }
+  if (lower === "t" || lower === "m" || lower === "g") {
+    // 0082/0081: jump straight to a mid-session capture field —
+    // T task, M note, G distraction.
+    if ((session && session.status !== "done") || quickRun) {
+      const id =
+        lower === "t" ? "#capture-thought" : lower === "m" ? "#note-text" : "#distraction-text";
+      const field = document.querySelector<HTMLInputElement>(id);
+      if (field) {
+        e.preventDefault();
+        field.focus();
+      }
+    }
+    return;
+  }
 
   // 0073: navigation shortcuts and the cheat sheet. Only outside dialogs/views where
   // a session or quick run owns the screen.
@@ -182,13 +200,26 @@ window.addEventListener("pageshow", catchUpHidden);
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
 app.addEventListener("click", (e) => {
+  // 0081: History Sessions / Distractions tabs (these don't carry data-action).
+  const historyTabBtn = (e.target as HTMLElement).closest<HTMLElement>("[data-history-tab]");
+  if (historyTabBtn) {
+    setHistoryTab(historyTabBtn.dataset.historyTab as "sessions" | "distractions");
+    render();
+    return;
+  }
+
   const target = (e.target as HTMLElement).closest(
-    "[data-action], #add-task",
+    "[data-action], #add-task, #add-and-focus",
   ) as HTMLElement | null;
   if (!target) return;
 
   if (target.id === "add-task") {
     addTask();
+    return;
+  }
+
+  if (target.id === "add-and-focus") {
+    addTaskAndFocus();
     return;
   }
 
@@ -255,12 +286,20 @@ app.addEventListener("submit", (e) => {
   if (form.id === "note-form") {
     e.preventDefault();
     const session = activeSession();
-    const text = form.querySelector<HTMLTextAreaElement>("#note-text")?.value ?? "";
+    const text = form.querySelector<HTMLInputElement>("#note-text")?.value ?? "";
     if (session) {
       addNote(session.id, text);
       persist();
       render();
     }
+  }
+  if (form.id === "capture-form") {
+    e.preventDefault();
+    addSessionTask();
+  }
+  if (form.id === "distraction-form") {
+    e.preventDefault();
+    logDistraction();
   }
 });
 

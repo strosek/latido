@@ -117,6 +117,7 @@ describe("sanitizeState", () => {
         },
       ],
       notes: [{ id: "n1", sessionId: "s1", text: "hi", createdAt: 1 }],
+      distractions: [],
       activeSessionId: "s1",
     };
     expect(sanitizeState(valid)).toEqual(valid);

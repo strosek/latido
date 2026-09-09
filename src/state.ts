@@ -70,6 +70,13 @@ export function setSubView(next: typeof subView): void {
   subView = next;
 }
 
+/** 0081: which History tab is shown (Sessions vs Distractions). */
+export let historyTab: "sessions" | "distractions" = "sessions";
+
+export function setHistoryTab(next: "sessions" | "distractions"): void {
+  historyTab = next;
+}
+
 export function setFocusMode(next: boolean): void {
   focusMode = next;
 }

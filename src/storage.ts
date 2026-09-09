@@ -1,6 +1,7 @@
 import { DEFAULT_SETTINGS, newId } from "./types";
 import type {
   AppState,
+  Distraction,
   ExportPayload,
   RestartNote,
   Session,
@@ -59,6 +60,7 @@ export function emptyState(): AppState {
     tasks: [],
     sessions: [],
     notes: [],
+    distractions: [],
     activeSessionId: null,
   };
 }
@@ -160,6 +162,10 @@ export function sanitizeSettings(raw: unknown): Settings {
         : DEFAULT_SETTINGS.notificationsEnabled,
     maxFlowtimeMin: clampNum(s.maxFlowtimeMin, 0, 1440, DEFAULT_SETTINGS.maxFlowtimeMin),
     flowtimeNudgeMin: clampNum(s.flowtimeNudgeMin, 0, 1440, DEFAULT_SETTINGS.flowtimeNudgeMin),
+    distractionLogEnabled:
+      typeof s.distractionLogEnabled === "boolean"
+        ? s.distractionLogEnabled
+        : DEFAULT_SETTINGS.distractionLogEnabled,
     theme: s.theme === "day" ? "day" : "night",
   };
 }
@@ -301,18 +307,30 @@ function sanitizeNote(raw: unknown): RestartNote {
   };
 }
 
+function sanitizeDistraction(raw: unknown): Distraction {
+  const d = (typeof raw === "object" && raw !== null ? raw : {}) as Partial<Distraction>;
+  return {
+    id: str(d.id) || newId(),
+    text: str(d.text),
+    createdAt:
+      typeof d.createdAt === "number" && Number.isFinite(d.createdAt) ? d.createdAt : Date.now(),
+    taskId: typeof d.taskId === "string" ? d.taskId : null,
+  };
+}
+
 /** Validate and repair an arbitrary (possibly partial/corrupt) state blob. */
 export function sanitizeState(raw: unknown): AppState {
   const d = (typeof raw === "object" && raw !== null ? raw : {}) as Partial<AppState>;
   const tasks = Array.isArray(d.tasks) ? d.tasks.map(sanitizeTask) : [];
   const sessions = Array.isArray(d.sessions) ? d.sessions.map(sanitizeSession) : [];
   const notes = Array.isArray(d.notes) ? d.notes.map(sanitizeNote) : [];
+  const distractions = Array.isArray(d.distractions) ? d.distractions.map(sanitizeDistraction) : [];
 
   // Only keep activeSessionId if it points at a live (running/paused) session.
   const active = sessions.find((s) => s.id === d.activeSessionId);
   const activeSessionId = active && active.status !== "done" ? active.id : null;
 
-  return { tasks, sessions, notes, activeSessionId };
+  return { tasks, sessions, notes, distractions, activeSessionId };
 }
 
 export function buildExport(settings: Settings, state: AppState): ExportPayload {

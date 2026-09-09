@@ -30,6 +30,7 @@ const SETTINGS: Settings = {
   notificationsEnabled: false,
   maxFlowtimeMin: 0,
   flowtimeNudgeMin: 90,
+  distractionLogEnabled: false,
   theme: "night",
 };
 
