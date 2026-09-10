@@ -281,6 +281,54 @@ describe("estimate cap (0013)", () => {
     const input = document.querySelector<HTMLInputElement>(".task .est-input")!;
     expect(input.placeholder).toBe("estimate (min)");
     expect(input.max).toBe("300");
+    // The estimate field lives in the right-aligned group, not the meta row.
+    expect(input.closest(".task-right")).not.toBeNull();
+    expect(input.closest(".task-meta")).toBeNull();
+  });
+});
+
+describe("inline priority/quadrant editing (0083)", () => {
+  it("cycles the priority pill and persists it", async () => {
+    const { state } = await import("./state");
+    addTask("Alpha");
+    const pill = document.querySelector<HTMLElement>('[data-action="cycle-priority"]')!;
+    expect(pill.textContent).toBe("P2");
+
+    pill.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(state.tasks[0].priority).toBe(3);
+    expect(document.querySelector('[data-action="cycle-priority"]')!.textContent).toBe("P3");
+  });
+
+  it("cycles the quadrant pill and persists it", async () => {
+    const { state } = await import("./state");
+    addTask("Alpha");
+    const pill = document.querySelector<HTMLElement>('[data-action="cycle-quadrant"]')!;
+    expect(pill.textContent).toContain("Not urgent · Important");
+
+    pill.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(state.tasks[0].quadrant).toBe("q3");
+    expect(document.querySelector('[data-action="cycle-quadrant"]')!.textContent).toContain(
+      "Urgent · Not important",
+    );
+  });
+
+  it("wraps priority 5→1 and quadrant q4→q1", async () => {
+    const { state } = await import("./state");
+    const { render } = await import("./views");
+    addTask("Alpha");
+    state.tasks[0].priority = 5;
+    state.tasks[0].quadrant = "q4";
+    render();
+
+    document
+      .querySelector<HTMLElement>('[data-action="cycle-priority"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(state.tasks[0].priority).toBe(1);
+
+    document
+      .querySelector<HTMLElement>('[data-action="cycle-quadrant"]')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(state.tasks[0].quadrant).toBe("q1");
   });
 });
 
@@ -298,7 +346,7 @@ describe("rest guide (0078)", () => {
     render();
 
     const learn = document.querySelector<HTMLElement>('[data-action="rest-guide"]')!;
-    expect(learn.textContent).toContain("Learn to rest");
+    expect(learn.textContent).toContain("How to actually rest?");
     learn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
     const overlay = document.querySelector<HTMLElement>(".overlay")!;
@@ -330,6 +378,33 @@ describe("rest guide (0078)", () => {
     const overlay = document.querySelector<HTMLElement>(".overlay")!;
     overlay.remove();
     expect(document.querySelector("#app")!.textContent).toContain("Break");
+    setBreakState(null);
+    render();
+  });
+
+  it("labels break controls as continue focusing, done, and a question", async () => {
+    const { setBreakState } = await import("./state");
+    const { render } = await import("./views");
+    setBreakState({
+      startedAt: Date.now(),
+      endsAt: Date.now() + 5 * 60 * 1000,
+      taskId: "t1",
+      technique: "flowtime",
+      done: false,
+    });
+    render();
+
+    const start = document.querySelector<HTMLElement>('[data-action="start-next"]')!;
+    expect(start.textContent).toContain("Continue focusing");
+    expect(start.querySelector("svg")).not.toBeNull();
+
+    const done = document.querySelector<HTMLElement>('[data-action="skip-break"]')!;
+    expect(done.textContent).toContain("Done");
+    expect(done.querySelector("svg")).not.toBeNull();
+
+    const learn = document.querySelector<HTMLElement>('[data-action="rest-guide"]')!;
+    expect(learn.textContent).toContain("How to actually rest?");
+    expect(learn.classList.contains("aux-action")).toBe(true);
     setBreakState(null);
     render();
   });
@@ -579,6 +654,25 @@ describe("in-session quick add (0082)", () => {
       '[data-action="toggle-focus"].corner-toggle',
     )!;
     expect(onToggle.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("focus mode drops the exit button and docks mark-done above the distraction field", async () => {
+    const { setSettings } = await import("./state");
+    const { DEFAULT_SETTINGS } = await import("./types");
+    setSettings({ ...DEFAULT_SETTINGS, distractionLogEnabled: true });
+    await startFlowtime();
+    document
+      .querySelector<HTMLElement>('[data-action="toggle-focus"].corner-toggle')!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(document.querySelector(".focus-exit")).toBeNull();
+    const mark = document.querySelector<HTMLElement>('[data-action="mark-done"]')!;
+    const dist = document.querySelector<HTMLElement>("#distraction-text")!;
+    expect(mark).not.toBeNull();
+    expect(dist).not.toBeNull();
+    expect(mark.compareDocumentPosition(dist) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // The fields live in the bottom-docked container.
+    expect(document.querySelector(".session-bottom")).not.toBeNull();
   });
 });
 

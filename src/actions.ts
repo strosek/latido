@@ -669,6 +669,28 @@ function confirmDeleteSession(sessionId: string): void {
   });
 }
 
+/** 0083: cycle order for the quadrant pill (q1 → q2 → q3 → q4 → q1). */
+const QUADRANT_CYCLE: Quadrant[] = ["q1", "q2", "q3", "q4"];
+
+/** 0083: cycle a task's quadrant from the row pill. */
+function cycleQuadrant(id: string): void {
+  const task = taskById(id);
+  if (!task) return;
+  const idx = QUADRANT_CYCLE.indexOf(task.quadrant);
+  task.quadrant = QUADRANT_CYCLE[(idx + 1) % QUADRANT_CYCLE.length];
+  persist();
+  render();
+}
+
+/** 0083: cycle a task's priority (1 → 2 → 3 → 4 → 5 → 1) from the row pill. */
+function cyclePriority(id: string): void {
+  const task = taskById(id);
+  if (!task) return;
+  task.priority = (task.priority % 5) + 1;
+  persist();
+  render();
+}
+
 export function setEstimate(id: string, value: string): void {
   const task = taskById(id);
   if (!task) return;
@@ -2077,6 +2099,12 @@ export function handleAction(
       break;
     case "toggle-quick":
       if (id) toggleQuick(id);
+      break;
+    case "cycle-quadrant":
+      if (id) cycleQuadrant(id);
+      break;
+    case "cycle-priority":
+      if (id) cyclePriority(id);
       break;
     case "today":
       if (id) toggleToday(id);

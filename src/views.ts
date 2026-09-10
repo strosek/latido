@@ -367,8 +367,8 @@ function moreActionsHtml(task: Task): string {
 /** Quadrant + priority badges, shared by main rows and compact rows. */
 function quadrantPriorityHtml(task: Task): string {
   return `
-    <span class="quadrant ${task.quadrant}">${QUADRANT_LABEL[task.quadrant]}</span>
-    ${priorityLabel(task.priority)}`;
+    <button class="quadrant ${task.quadrant}" data-action="cycle-quadrant" data-id="${task.id}" title="Quadrant — click to change" aria-label="Quadrant ${QUADRANT_LABEL[task.quadrant]}, click to change">${QUADRANT_LABEL[task.quadrant]}</button>
+    ${priorityLabel(task)}`;
 }
 
 /** 0079: a collapsible board section card — toggle header + body. */
@@ -473,8 +473,8 @@ function recurrenceBadgeHtml(rec: Recurrence | null): string {
   return `<span class="recur-badge" title="Repeats ${recurrenceLabel(rec)}" aria-label="Repeats ${recurrenceLabel(rec)}">${icon("repeat")}</span>`;
 }
 
-function priorityLabel(priority: number): string {
-  return `<span class="priority-pill" style="color:${PRIORITY_COLORS[priority]}" title="Priority ${priority} of 5" aria-label="Priority ${priority} of 5">P${priority}</span>`;
+function priorityLabel(task: Task): string {
+  return `<button class="priority-pill" style="color:${PRIORITY_COLORS[task.priority]}" data-action="cycle-priority" data-id="${task.id}" title="Priority ${task.priority} of 5 — click to change" aria-label="Priority ${task.priority} of 5, click to change">P${task.priority}</button>`;
 }
 
 /** Horizontal proportion bars (label + track + value). */
@@ -546,9 +546,6 @@ function renderBoard(): void {
   const rowFor = (task: Task, opts: { done?: boolean }): string => {
     const t = totals.get(task.id)!;
     const bits: string[] = [];
-    if (settings.showEstimates && task.estimatedMin != null) {
-      bits.push(`est ${formatDuration(task.estimatedMin * 60_000)}`);
-    }
     if (t.workMs > 0) bits.push(formatDuration(t.workMs));
     if (t.sessionCount > 0)
       bits.push(`${t.sessionCount} session${t.sessionCount === 1 ? "" : "s"}`);
@@ -596,14 +593,16 @@ function renderBoard(): void {
                     .join("")}</span>`
                 : ""
             }
-            ${
-              settings.showEstimates
-                ? `<input type="number" class="est-input" data-estimate="${task.id}" value="${task.estimatedMin ?? ""}" min="0" max="300" placeholder="estimate (min)" aria-label="Estimated minutes (max 300)" />`
-                : ""
-            }
           </span>
         </div>
-        ${bits.length ? `<span class="task-stats">${bits.join(" · ")}</span>` : ""}
+        <div class="task-right">
+          ${
+            settings.showEstimates
+              ? `<input type="number" class="est-input" data-estimate="${task.id}" value="${task.estimatedMin ?? ""}" min="0" max="300" placeholder="estimate (min)" aria-label="Estimated minutes (max 300)" />`
+              : ""
+          }
+          ${bits.length ? `<span class="task-stats">${bits.join(" · ")}</span>` : ""}
+        </div>
         <div class="task-actions">
           ${quickButton}
           <button class="icon-btn" data-action="open-menu" data-id="${task.id}" title="More actions" aria-label="More actions">${icon("dots")}</button>
@@ -1216,9 +1215,12 @@ function renderSession(session: Session): void {
         </header>
         ${clockHtml}
         ${countBit}
-        ${distractionFieldHtml("focus-capture")}
-        <button class="ghost" data-action="mark-done" data-id="${session.taskId}">${icon("check")} ${markDoneLabel}</button>
-        <button class="ghost focus-exit" data-action="toggle-focus">Exit focus · Esc</button>
+        <div class="session-bottom">
+          <div class="session-controls">
+            <button class="ghost" data-action="mark-done" data-id="${session.taskId}">${icon("check")} ${markDoneLabel}</button>
+          </div>
+          ${distractionFieldHtml("focus-capture")}
+        </div>
       </main>`,
     );
     return;
@@ -1277,22 +1279,24 @@ function renderSession(session: Session): void {
         <button class="primary" data-action="finish">${icon("stop")} Finish</button>
       </div>
 
-      <section class="capture-section">
-        <h3>Notes for restarting later</h3>
-        <form id="note-form" class="capture-row">
-          <input id="note-text" type="text" placeholder="What should you remember when you come back?" autocomplete="off" aria-label="Add a note for restarting later" />
-          <button type="submit" class="ghost">Add</button>
-        </form>
-        ${
-          notes.length
-            ? `<ul class="note-list">${notes
-                .map((n) => `<li>${escapeHtml(n.text)}</li>`)
-                .join("")}</ul>`
-            : ""
-        }
-      </section>
+      <div class="session-bottom">
+        <section class="capture-section">
+          <h3>Notes for restarting later</h3>
+          <form id="note-form" class="capture-row">
+            <input id="note-text" type="text" placeholder="What should you remember when you come back?" autocomplete="off" aria-label="Add a note for restarting later" />
+            <button type="submit" class="ghost">Add</button>
+          </form>
+          ${
+            notes.length
+              ? `<ul class="note-list">${notes
+                  .map((n) => `<li>${escapeHtml(n.text)}</li>`)
+                  .join("")}</ul>`
+              : ""
+          }
+        </section>
 
-      ${sessionThoughtsHtml()}
+        ${sessionThoughtsHtml()}
+      </div>
     </main>
     <p class="shortcut-hint"><span class="hint-text"><strong>Space</strong> pause/resume · <strong>F</strong> finish · <strong>T</strong> task · <strong>M</strong> note · <strong>G</strong> distraction · <strong>?</strong> shortcuts</span>${koFiHtml()}</p>`,
   );
@@ -1311,10 +1315,10 @@ function renderBreak(): void {
           <span class="session-phase">Ready to focus again</span>
         </header>
         <div class="session-controls">
-          <button class="primary" data-action="start-next">Start focusing</button>
-          <button class="ghost" data-action="rest-guide">Learn to rest</button>
-          <button class="ghost" data-action="end-break">Done</button>
+          <button class="primary" data-action="start-next">${icon("play")} Continue focusing</button>
+          <button class="ghost" data-action="end-break">${icon("stop")} Done</button>
         </div>
+        <button class="aux-action" data-action="rest-guide">${icon("info")} How to actually rest?</button>
       </main>`,
     );
     return;
@@ -1333,12 +1337,12 @@ function renderBreak(): void {
       </header>
       ${clockFrameHtml(formatMs(remaining), { ringFrac: total > 0 ? remaining / total : 0 })}
       <div class="session-controls">
-        <button class="primary" data-action="start-next">Start now</button>
-        <button class="ghost" data-action="rest-guide">Learn to rest</button>
-        <button class="icon-btn" data-action="skip-break" title="Skip break" aria-label="Skip break">${icon("skip")}</button>
+        <button class="primary" data-action="start-next">${icon("play")} Continue focusing</button>
+        <button class="ghost" data-action="skip-break">${icon("stop")} Done</button>
       </div>
+      <button class="aux-action" data-action="rest-guide">${icon("info")} How to actually rest?</button>
     </main>
-    <p class="shortcut-hint"><span class="hint-text"><strong>F</strong> start focusing</span>${koFiHtml()}</p>`,
+    <p class="shortcut-hint"><span class="hint-text"><strong>F</strong> continue focusing</span>${koFiHtml()}</p>`,
   );
 }
 
@@ -1361,7 +1365,7 @@ function renderQuickRun(): void {
         <button class="primary" data-action="quick-next">Close & next</button>
         <button class="ghost" data-action="quick-finish">Finish run</button>
       </div>
-      ${sessionThoughtsHtml()}
+      <div class="session-bottom">${sessionThoughtsHtml()}</div>
     </main>
     <p class="shortcut-hint"><span class="hint-text"><strong>F</strong> finish run</span>${koFiHtml()}</p>`,
   );
